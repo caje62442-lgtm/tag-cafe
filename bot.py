@@ -34,7 +34,6 @@ TAGS_FILE = "tags.json"
 def load_tags() -> List[Dict[str, Any]]:
     if not os.path.exists(TAGS_FILE):
         return []
-
     with open(TAGS_FILE, "r", encoding="utf-8") as f:
         data = json.load(f)
 
@@ -80,20 +79,33 @@ def extract_invite_code(invite: str) -> str:
     return invite.strip().strip("/")
 
 async def fetch_invite_preview(bot: commands.Bot, invite_value: str) -> Dict[str, Optional[str]]:
+    """
+    Fetches:
+    - guild name
+    - icon URL
+    - approximate member count
+    - approximate online count
+    """
     code = extract_invite_code(invite_value)
     try:
-        inv = await bot.fetch_invite(code, with_counts=False)
+        inv = await bot.fetch_invite(code, with_counts=True)
         guild = inv.guild
 
         icon_url = None
         if guild and getattr(guild, "icon", None):
             icon_url = guild.icon.url
 
+        # These may be None depending on invite/server settings
+        member_count = getattr(inv, "approximate_member_count", None)
+        online_count = getattr(inv, "approximate_presence_count", None)
+
         return {
             "code": code,
             "guild_name": guild.name if guild else None,
             "icon_url": icon_url,
             "invite_url": f"https://discord.gg/{code}",
+            "member_count": str(member_count) if member_count is not None else None,
+            "online_count": str(online_count) if online_count is not None else None,
         }
     except Exception:
         return {
@@ -101,6 +113,8 @@ async def fetch_invite_preview(bot: commands.Bot, invite_value: str) -> Dict[str
             "guild_name": None,
             "icon_url": None,
             "invite_url": invite_value if invite_value.startswith("http") else f"https://discord.gg/{code}",
+            "member_count": None,
+            "online_count": None,
         }
 
 # ======================
@@ -112,28 +126,49 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 GUILD_ID_ENV = os.getenv("GUILD_ID")
 GUILD_ID = int(GUILD_ID_ENV) if GUILD_ID_ENV and GUILD_ID_ENV.isdigit() else None
 
+def fmt_int(n: Optional[str]) -> Optional[str]:
+    if n is None:
+        return None
+    try:
+        return f"{int(n):,}"
+    except Exception:
+        return n
+
 def make_embed(entry: Dict[str, Any], preview: Dict[str, Optional[str]], index: int, total: int) -> discord.Embed:
     tag = entry["tag"]
     invite_url = preview.get("invite_url") or entry["invite"]
     guild_name = preview.get("guild_name") or "Unknown server"
+
+    member_count = fmt_int(preview.get("member_count"))
+    online_count = fmt_int(preview.get("online_count"))
+
     icon_url = preview.get("icon_url")
 
-    # Bigger "card" layout: title + multiple fields
     emb = discord.Embed(
-        title=f"Guild Tag: {tag}",
-        description="",
-        color=0x5865F2  # Discord blurple feels “native”
+        title=f"GUILD TAG: {tag}",
+        color=0x2F3136
     )
 
-    emb.add_field(name="Server", value=guild_name, inline=False)
-    emb.add_field(name="Invite", value=f"[Join this server]({invite_url})\n{invite_url}", inline=False)
+    # Put "Server" on the same visual row as "Members" using inline fields
+    emb.add_field(name="SERVER", value=guild_name, inline=True)
 
+    if member_count and online_count:
+        emb.add_field(name="MEMBERS", value=f"{member_count}\n({online_count} online)", inline=True)
+    elif member_count:
+        emb.add_field(name="MEMBERS", value=member_count, inline=True)
+    else:
+        emb.add_field(name="MEMBERS", value="—", inline=True)
+
+    # Invite link as a clean field (no extra "Join this server" line)
+    emb.add_field(name="INVITE LINK", value=invite_url, inline=False)
+
+    # Big “card” feel: use the icon as a large image (when available)
+    # If no icon, keep it clean and skip.
     if icon_url:
-        emb.set_thumbnail(url=icon_url)
+        emb.set_image(url=icon_url)
 
-    # Only show pager text if there are multiple results
     if total > 1:
-        emb.set_footer(text=f"Result {index + 1} of {total}")
+        emb.set_footer(text=f"Page {index + 1} of {total}")
 
     return emb
 
@@ -145,13 +180,13 @@ class TagPager(discord.ui.View):
         self.i = 0
         self.preview_cache: Dict[int, Dict[str, Optional[str]]] = {}
 
-        # Button order: Previous | Next | Join Server (cleaner)
-        self.prev_button = discord.ui.Button(label="Previous", style=discord.ButtonStyle.secondary)
-        self.next_button = discord.ui.Button(label="Next", style=discord.ButtonStyle.secondary)
-        self.join_button = discord.ui.Button(label="Join Server", style=discord.ButtonStyle.link, url="https://discord.gg/")
+        self.prev_button = discord.ui.Button(label="Previous", style=discord.ButtonStyle.success)
+        self.next_button = discord.ui.Button(label="Next", style=discord.ButtonStyle.success)
+        self.join_button = discord.ui.Button(label="Join Server", style=discord.ButtonStyle.primary)
 
         self.prev_button.callback = self.on_prev
         self.next_button.callback = self.on_next
+        self.join_button.callback = self.on_join
 
         self.add_item(self.prev_button)
         self.add_item(self.next_button)
@@ -187,11 +222,8 @@ class TagPager(discord.ui.View):
 
     async def _render_current(self, interaction: discord.Interaction):
         preview = await self._get_preview(self.i)
-        invite_url = preview.get("invite_url") or self.results[self.i]["invite"]
-        self.join_button.url = invite_url
-
-        self._sync_buttons()
         emb = make_embed(self.results[self.i], preview, self.i, len(self.results))
+        self._sync_buttons()
         await interaction.response.edit_message(embed=emb, view=self)
 
     async def on_prev(self, interaction: discord.Interaction):
@@ -202,9 +234,15 @@ class TagPager(discord.ui.View):
         self.i += 1
         await self._render_current(interaction)
 
+    async def on_join(self, interaction: discord.Interaction):
+        preview = await self._get_preview(self.i)
+        invite_url = preview.get("invite_url") or self.results[self.i]["invite"]
+        await interaction.response.send_message(invite_url, ephemeral=True)
+
     async def on_timeout(self):
         self.prev_button.disabled = True
         self.next_button.disabled = True
+        self.join_button.disabled = True
 
 @bot.event
 async def on_ready():
@@ -240,11 +278,9 @@ async def searchtag(interaction: discord.Interaction, tag: str):
         return
 
     view = TagPager(results=results, owner_id=interaction.user.id)
-
     preview0 = await view._get_preview(0)
-    view.join_button.url = preview0.get("invite_url") or results[0]["invite"]
-
     emb = make_embed(results[0], preview0, 0, len(results))
+
     await interaction.followup.send(embed=emb, view=view, ephemeral=False)
 
 token = os.getenv("DISCORD_TOKEN")
