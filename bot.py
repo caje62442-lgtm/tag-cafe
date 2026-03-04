@@ -1,37 +1,24 @@
+import os
 import discord
 from discord.ext import commands
-import os
-from flask import Flask
-from threading import Thread
-
-# Small web server so Render keeps the service alive
-app = Flask('')
-
-@app.route('/')
-def home():
-    return "Bot is alive!"
-
-def run():
-    app.run(host='0.0.0.0', port=10000)
-
-def keep_alive():
-    t = Thread(target=run)
-    t.start()
 
 intents = discord.Intents.default()
-intents.message_content = True
-
 bot = commands.Bot(command_prefix="!", intents=intents)
 
 @bot.event
 async def on_ready():
-    print(f"Bot is online as {bot.user}")
+    print(f"Online as {bot.user}")
+    try:
+        synced = await bot.tree.sync()
+        print(f"Synced {len(synced)} commands")
+    except Exception as e:
+        print("Sync failed:", e)
 
-@bot.command()
-async def ping(ctx):
-    await ctx.send("Pong! Bot is working.")
-
-keep_alive()
+@bot.tree.command(name="ping", description="Test if the bot is alive")
+async def ping(interaction: discord.Interaction):
+    await interaction.response.send_message("Pong! Slash command works.")
 
 token = os.getenv("DISCORD_TOKEN")
+if not token:
+    raise RuntimeError("DISCORD_TOKEN is not set.")
 bot.run(token)
