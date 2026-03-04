@@ -1,0 +1,42 @@
+name: Update tags.json
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 9 * * *"  # daily at 09:00 UTC
+
+permissions:
+  contents: write
+
+jobs:
+  build-tags:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements_ingest.txt
+
+      - name: Run ingestion
+        env:
+          DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
+          MAX_TAG_PAGES: "50"
+          MAX_PAGES_PER_TAG: "2"
+          SCRAPE_SLEEP: "1.0"
+        run: |
+          python ingest_discordhome.py
+
+      - name: Commit tags.json if changed
+        run: |
+          git config user.name "tag-cafe-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add tags.json
+          git diff --cached --quiet || git commit -m "Update tags.json"
+          git push
