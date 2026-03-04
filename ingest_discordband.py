@@ -8,23 +8,28 @@ from urllib.parse import urljoin, urlparse, parse_qs, urlencode, urlunparse
 import requests
 from bs4 import BeautifulSoup
 
-# Optional: validate invites via Discord API (discord.py)
-# pip install -r requirements_ingest.txt should include discord.py if you enable this
-VALIDATE_INVITES = os.getenv("VALIDATE_INVITES", "0").strip() == "1"
-
 # =========================
 # Config (env overridable)
 # =========================
 BASE = "https://discord.band"
-START_PATH = "/tags"
-
-MAX_LIST_PAGES = int(os.getenv("MAX_LIST_PAGES", "50"))      # pages per listing (tags, a-z, etc.)
-SCRAPE_SLEEP = float(os.getenv("SCRAPE_SLEEP", "1.0"))       # seconds between HTTP requests
-REQUEST_TIMEOUT = float(os.getenv("REQUEST_TIMEOUT", "30"))
 OUT_FILE = os.getenv("OUT_FILE", "tags.json")
 
-# If 1, also crawl the filter pages at the top of /tags (A–Z, 2-char, etc.)
-CRAWL_FILTER_PAGES = os.getenv("CRAWL_FILTER_PAGES", "1").strip() == "1"
+SCRAPE_SLEEP = float(os.getenv("SCRAPE_SLEEP", "1.0"))
+REQUEST_TIMEOUT = float(os.getenv("REQUEST_TIMEOUT", "30"))
+
+# How many pages to crawl per section
+MAX_PAGES_PER_SECTION = int(os.getenv("MAX_PAGES_PER_SECTION", "50"))
+
+# If the run produces fewer than this many NEW records, do not overwrite the DB.
+# (Prevents “oops it wrote 1 record and deleted 5K lines.”)
+MIN_TOTAL_RECORDS_TO_WRITE = int(os.getenv("MIN_TOTAL_RECORDS_TO_WRITE", "1000"))
+MIN_NEW_RECORDS_TO_WRITE = int(os.getenv("MIN_NEW_RECORDS_TO_WRITE", "200"))
+
+# Keep duplicates by tag (you want prev/next cycling multiple servers per tag)
+KEEP_DUPLICATE_TAGS = os.getenv("KEEP_DUPLICATE_TAGS", "1").strip() not in ("0", "false", "False")
+
+# Optional validation via Discord API
+VALIDATE_INVITES = os.getenv("VALIDATE_INVITES", "0").strip() == "1"
 
 HEADERS = {
     "User-Agent": os.getenv(
@@ -35,13 +40,41 @@ HEADERS = {
 }
 
 INVITE_RE = re.compile(
-    r"(https?://)?(www\.)?(discord\.gg|discord\.com/invite)/(?P<code>[A-Za-z0-9-]+)",
+    r"(?:https?://)?(?:www\.)?(?:discord\.gg|discord\.com/invite)/(?P<code>[A-Za-z0-9-]+)",
     re.IGNORECASE,
 )
 
-# =========================
-# HTTP helpers
-# =========================
+# Discord “guild tag” tokens: allow A–Z/0–9 and short unicode-ish tokens.
+# discord.band has unicode tags too; keep it permissive but avoid obvious junk.
+def is_plausible_tag(token: str) -> bool:
+    t = token.strip()
+    if not t:
+        return False
+    if " " in t:
+        return False
+    if t.lower() in {"join", "tags", "tag", "discord", "server", "servers"}:
+        return False
+    if "http" in t.lower() or "discord.gg" in t.lower() or "discord.com" in t.lower():
+        return False
+    # Discord tags are typically short. discord.band lists 2–4 char groups heavily.
+    if len(t) < 2 or len(t) > 10:
+        return False
+    return True
+
+def normalize_tag(tag: str) -> str:
+    # Store uppercase so your bot search can be case-insensitive while data is consistent.
+    return tag.strip().upper()
+
+def normalize_invite(url_or_code: str) -> Optional[str]:
+    s = url_or_code.strip()
+    if not s:
+        return None
+    m = INVITE_RE.search(s)
+    if not m:
+        return None
+    code = m.group("code")
+    return f"https://discord.gg/{code}"
+
 _session = requests.Session()
 _session.headers.update(HEADERS)
 
@@ -55,185 +88,171 @@ def get_soup(url: str) -> BeautifulSoup:
     return BeautifulSoup(r.text, "html.parser")
 
 def set_query_param(url: str, key: str, value: str) -> str:
-    """
-    Return url with ?key=value updated (preserving other params).
-    """
     parsed = urlparse(url)
     q = parse_qs(parsed.query)
     q[key] = [value]
     new_query = urlencode(q, doseq=True)
     return urlunparse((parsed.scheme, parsed.netloc, parsed.path, parsed.params, new_query, parsed.fragment))
 
-# =========================
-# Parsing logic
-# =========================
-def normalize_tag(tag: str) -> str:
-    # Your bot should search case-insensitively; storing uppercase keeps things consistent.
-    return tag.strip().upper()
+def load_existing(path: str) -> List[Dict[str, str]]:
+    if not os.path.exists(path):
+        return []
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        if isinstance(data, list):
+            out = []
+            for item in data:
+                if not isinstance(item, dict):
+                    continue
+                tag = str(item.get("tag", "")).strip()
+                invite = str(item.get("invite", "")).strip()
+                if tag and invite:
+                    out.append({"tag": normalize_tag(tag), "invite": normalize_invite(invite) or invite})
+            return out
+    except Exception:
+        pass
+    return []
 
-def normalize_invite(inv: str) -> Optional[str]:
-    inv = inv.strip()
-    if not inv:
-        return None
-    m = INVITE_RE.search(inv)
-    if not m:
-        return None
-    code = m.group("code")
-    return f"https://discord.gg/{code}"
+def write_backup(path: str):
+    if not os.path.exists(path):
+        return
+    backup = path.replace(".json", "") + ".bak.json"
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            old = f.read()
+        with open(backup, "w", encoding="utf-8") as f:
+            f.write(old)
+        print(f"Backup written: {backup}")
+    except Exception as e:
+        print(f"Backup failed: {repr(e)}")
 
-def is_probable_tag_token(s: str) -> bool:
+def nearest_tag_from_container(container: BeautifulSoup) -> Optional[str]:
     """
-    Heuristic: discord "server tags" are usually short (2–4),
-    but discord.band includes unicode tags too.
-    We'll allow up to 10 chars, no spaces, not a pure number, not a URL-ish token.
+    Find the tag text near an invite button.
+    We scan short tokens in container text and pick the first plausible one.
     """
-    s = s.strip()
-    if not s:
-        return False
-    if " " in s:
-        return False
-    if s.isdigit():
-        return False
-    if s.lower() in {"join", "login", "tag", "tags"}:
-        return False
-    if "http" in s.lower() or "discord.gg" in s.lower() or "discord.com" in s.lower():
-        return False
-    # Very long tokens are probably names, not tags
-    if len(s) > 10:
-        return False
-    return True
-
-def extract_card_tag(card: BeautifulSoup) -> Optional[str]:
-    """
-    Try multiple strategies to find the tag displayed on the server card.
-    """
-    # Strategy 1: images sometimes have alt text containing the tag.
-    # Example from the /tags page: "Image: NYA" then "NYA". :contentReference[oaicite:1]{index=1}
-    imgs = card.find_all("img", alt=True)
-    for img in imgs:
+    # Prefer alt text of images first (often the tag is an image)
+    for img in container.find_all("img", alt=True):
         alt = (img.get("alt") or "").strip()
-        # alt often equals the tag directly or includes it
-        # Keep it conservative: prefer short, single-token alts
-        if is_probable_tag_token(alt):
+        if is_plausible_tag(alt):
             return normalize_tag(alt)
 
-    # Strategy 2: scan visible text tokens inside the card
-    tokens: List[str] = []
-    for t in card.stripped_strings:
-        tokens.append(t.strip())
-
-    # Often the tag appears very early; choose the first plausible tag token.
+    # Then scan text tokens
+    text = container.get_text(" ", strip=True)
+    tokens = [t.strip("[](){}<>!@#$%^&*_=+|;:'\",.?/\\") for t in text.split()]
     for tok in tokens:
-        if is_probable_tag_token(tok):
+        if is_plausible_tag(tok):
             return normalize_tag(tok)
 
     return None
 
-def extract_card_invite(card: BeautifulSoup) -> Optional[str]:
+def extract_records_from_page(soup: BeautifulSoup) -> List[Dict[str, str]]:
     """
-    Find a discord invite link inside the card (anchor href or visible text).
-    """
-    # Prefer hrefs
-    for a in card.find_all("a", href=True):
-        href = a["href"].strip()
-        inv = normalize_invite(href)
-        if inv:
-            return inv
-
-    # Fallback: sometimes invite appears in text (less common)
-    text = " ".join(list(card.stripped_strings))
-    m = INVITE_RE.search(text)
-    if m:
-        return f"https://discord.gg/{m.group('code')}"
-    return None
-
-def extract_records_from_listing_page(soup: BeautifulSoup) -> List[Dict[str, str]]:
-    """
-    Extract {tag, invite} from a listing page like /tags or a filter page.
-
-    The page includes multiple server "cards", each with a tag and a Join link. :contentReference[oaicite:2]{index=2}
+    Strategy:
+    - find all anchors linking to discord.gg / discord.com/invite
+    - for each anchor, walk up a few parents to get the local card container
+    - extract tag from that container
     """
     records: List[Dict[str, str]] = []
+    seen_pairs: Set[Tuple[str, str]] = set()
 
-    # We find anchors that look like invites, then climb to a parent container to parse the whole card.
     invite_anchors = []
     for a in soup.find_all("a", href=True):
-        href = a["href"]
+        href = a["href"].strip()
         if INVITE_RE.search(href):
             invite_anchors.append(a)
 
-    # If invites aren’t in hrefs (rare), we still try a broad card approach:
-    # find blocks that contain the word "Join" and attempt parse.
-    if not invite_anchors:
-        for a in soup.find_all("a"):
-            if a.get_text(strip=True).lower() == "join":
-                invite_anchors.append(a)
-
-    seen_cards: Set[int] = set()
     for a in invite_anchors:
-        # Try to find a stable card container. We walk up a few levels.
-        card = a
-        for _ in range(6):
-            parent = card.parent
-            if not parent:
+        inv = normalize_invite(a["href"])
+        if not inv:
+            continue
+
+        # Walk up to a “card-ish” container but not the whole page.
+        container = a
+        for _ in range(5):
+            if container.parent:
+                container = container.parent
+            else:
                 break
-            card = parent
 
-        # Dedup by object id (bs4 element identity)
-        card_id = id(card)
-        if card_id in seen_cards:
+        tag = nearest_tag_from_container(container)
+        if not tag:
             continue
-        seen_cards.add(card_id)
 
-        tag = extract_card_tag(card)
-        invite = extract_card_invite(card)
+        key = (tag, inv)
+        if key in seen_pairs:
+            continue
+        seen_pairs.add(key)
+        records.append({"tag": tag, "invite": inv})
 
-        if tag and invite:
-            records.append({"tag": tag, "invite": invite})
+    return records
 
-    # Final dedupe (tag+invite)
-    out: List[Dict[str, str]] = []
+def candidate_page_urls(section_url: str, page: int) -> List[str]:
+    """
+    discord.band sometimes uses /page/N and sometimes ?page=N.
+    Try both.
+    """
+    if page <= 1:
+        return [section_url]
+    a = section_url.rstrip("/") + f"/page/{page}"
+    b = set_query_param(section_url, "page", str(page))
+    return [a, b]
+
+def crawl_section(section_url: str, max_pages: int) -> List[Dict[str, str]]:
+    all_records: List[Dict[str, str]] = []
+    empty_streak = 0
+
+    for page in range(1, max_pages + 1):
+        urls = candidate_page_urls(section_url, page)
+        best_records: List[Dict[str, str]] = []
+
+        for url in urls:
+            print(f"GET {url}")
+            try:
+                soup = get_soup(url)
+            except Exception as e:
+                print(f"  fetch failed: {repr(e)}")
+                continue
+
+            title = soup.title.string.strip() if soup.title and soup.title.string else ""
+            print(f"  title={title!r}")
+
+            records = extract_records_from_page(soup)
+            print(f"  found={len(records)}")
+            if len(records) > len(best_records):
+                best_records = records
+
+        if not best_records:
+            empty_streak += 1
+            # allow a couple of misses before stopping to handle flaky pages
+            if empty_streak >= 2:
+                print(f"STOP section={section_url} page={page} (no records)")
+                break
+        else:
+            empty_streak = 0
+            all_records.extend(best_records)
+
+        sleep()
+
+    # Dedup in-section
     seen: Set[Tuple[str, str]] = set()
-    for r in records:
-        key = (r["tag"], r["invite"])
-        if key in seen:
+    out: List[Dict[str, str]] = []
+    for r in all_records:
+        k = (r["tag"], r["invite"])
+        if k in seen:
             continue
-        seen.add(key)
+        seen.add(k)
         out.append(r)
-
-    return out
-
-def discover_filter_urls(soup: BeautifulSoup, base_url: str) -> List[str]:
-    """
-    On /tags, there are filter buttons like A–Z Tags, 2-Character Tags, etc. :contentReference[oaicite:3]{index=3}
-    We collect those URLs so we can crawl them too.
-    """
-    urls: List[str] = []
-    for a in soup.find_all("a", href=True):
-        href = a["href"].strip()
-        # keep only internal links under /tags
-        if href.startswith("/tags"):
-            urls.append(urljoin(base_url, href))
-    # Dedup preserving order
-    seen = set()
-    out = []
-    for u in urls:
-        if u not in seen:
-            seen.add(u)
-            out.append(u)
     return out
 
 # =========================
 # Optional validation
 # =========================
 async def validate_with_discord(records: List[Dict[str, str]]) -> List[Dict[str, str]]:
-    """
-    Validate invite codes via Discord API.
-    Does NOT store member count; only keeps the record if invite resolves.
-    """
-    import discord  # imported only if used
+    import discord
 
-    token = os.getenv("DISCORD_TOKEN")
+    token = os.getenv("DISCORD_TOKEN", "").strip()
     if not token:
         raise RuntimeError("DISCORD_TOKEN is not set (required for VALIDATE_INVITES=1).")
 
@@ -251,7 +270,6 @@ async def validate_with_discord(records: List[Dict[str, str]]) -> List[Dict[str,
 
         code = inv.rstrip("/").split("/")[-1]
         try:
-            # with_counts=False ensures you’re not even requesting counts
             await client.fetch_invite(code, with_counts=False)
             valid.append(rec)
         except Exception:
@@ -260,102 +278,82 @@ async def validate_with_discord(records: List[Dict[str, str]]) -> List[Dict[str,
     await client.close()
     return valid
 
-# =========================
-# Main crawl
-# =========================
-def crawl_listing(list_url: str, max_pages: int) -> List[Dict[str, str]]:
-    """
-    Crawl list_url, list_url?page=2, etc., collecting tag+invite records.
-    """
-    all_records: List[Dict[str, str]] = []
-    for page in range(1, max_pages + 1):
-        url = list_url if page == 1 else set_query_param(list_url, "page", str(page))
-        print(f"LIST PAGE: {url}")
-        try:
-            soup = get_soup(url)
-        except Exception as e:
-            print(f"STOP (fetch failed) url={url} err={repr(e)}")
-            break
-
-        title = soup.title.string.strip() if soup.title and soup.title.string else ""
-        # If we ever get a “not authorized” footer, the content can still exist above it.
-        # We don’t hard-stop based on that text; we stop if we extract nothing repeatedly.
-        print(f"TITLE: {title}")
-
-        records = extract_records_from_listing_page(soup)
-        print(f"FOUND RECORDS: {len(records)} on page {page}")
-
-        if not records:
-            # No records usually means end of pagination or blocked content.
-            print(f"STOP (no records) at page {page}")
-            break
-
-        all_records.extend(records)
-        sleep()
-
-    # Dedup overall
-    seen: Set[Tuple[str, str]] = set()
-    out: List[Dict[str, str]] = []
-    for r in all_records:
-        k = (r["tag"], r["invite"])
-        if k in seen:
-            continue
-        seen.add(k)
-        out.append(r)
-
-    return out
-
-def write_tags_json(records: List[Dict[str, str]], path: str):
-    with open(path, "w", encoding="utf-8") as f:
-        json.dump(records, f, indent=2, ensure_ascii=False)
-    print(f"Wrote {len(records)} records to {path}")
-
 def main():
-    start_url = urljoin(BASE, START_PATH)
-    print(f"START: {start_url}")
+    sections = [
+        urljoin(BASE, "/tags/2-characters"),
+        urljoin(BASE, "/tags/3-characters"),
+        urljoin(BASE, "/tags/4-characters"),
+        urljoin(BASE, "/tags/a-z"),
+        urljoin(BASE, "/tags/new"),
+    ]
 
-    # Always crawl main /tags
-    soup0 = get_soup(start_url)
-    targets = [start_url]
+    print("RUN CONFIG:")
+    print(f"  OUT_FILE={OUT_FILE}")
+    print(f"  MAX_PAGES_PER_SECTION={MAX_PAGES_PER_SECTION}")
+    print(f"  SCRAPE_SLEEP={SCRAPE_SLEEP}")
+    print(f"  VALIDATE_INVITES={int(VALIDATE_INVITES)}")
+    print(f"  KEEP_DUPLICATE_TAGS={int(KEEP_DUPLICATE_TAGS)}")
+    print(f"  MIN_TOTAL_RECORDS_TO_WRITE={MIN_TOTAL_RECORDS_TO_WRITE}")
+    print(f"  MIN_NEW_RECORDS_TO_WRITE={MIN_NEW_RECORDS_TO_WRITE}")
 
-    # Also crawl filter pages (A–Z, 2-char, etc.) from the top buttons. :contentReference[oaicite:4]{index=4}
-    if CRAWL_FILTER_PAGES:
-        filters = discover_filter_urls(soup0, BASE)
-        # Keep only a reasonable subset: “Tag List” pages can include internal duplicates.
-        # Still safe to crawl; we dedupe.
-        for u in filters:
-            if u not in targets:
-                targets.append(u)
+    existing = load_existing(OUT_FILE)
+    existing_pairs: Set[Tuple[str, str]] = set((r["tag"], r["invite"]) for r in existing)
+    print(f"Existing records: {len(existing)}")
 
-    print("TARGET LIST PAGES:")
-    for t in targets[:30]:
-        print(" -", t)
-    if len(targets) > 30:
-        print(f" (+ {len(targets)-30} more)")
+    scraped: List[Dict[str, str]] = []
 
-    all_records: List[Dict[str, str]] = []
-    for t in targets:
-        recs = crawl_listing(t, MAX_LIST_PAGES)
-        all_records.extend(recs)
+    for sec in sections:
+        print(f"\n=== SECTION: {sec} ===")
+        recs = crawl_section(sec, MAX_PAGES_PER_SECTION)
+        print(f"SECTION TOTAL: {len(recs)}")
+        scraped.extend(recs)
 
-    # Global dedupe
+    # Dedup scraped
     seen: Set[Tuple[str, str]] = set()
     deduped: List[Dict[str, str]] = []
-    for r in all_records:
+    for r in scraped:
         k = (r["tag"], r["invite"])
         if k in seen:
             continue
         seen.add(k)
         deduped.append(r)
 
-    print(f"Collected {len(deduped)} records before validation.")
+    new_only = [r for r in deduped if (r["tag"], r["invite"]) not in existing_pairs]
+    print(f"\nScraped total (deduped): {len(deduped)}")
+    print(f"New records: {len(new_only)}")
 
     if VALIDATE_INVITES:
         import asyncio
         deduped = asyncio.run(validate_with_discord(deduped))
-        print(f"Validated {len(deduped)} invites.")
+        # recompute new_only after validation
+        new_only = [r for r in deduped if (r["tag"], r["invite"]) not in existing_pairs]
+        print(f"After validation total: {len(deduped)}")
+        print(f"After validation new: {len(new_only)}")
 
-    write_tags_json(deduped, OUT_FILE)
+    # Safety guard: do not wipe your DB if scraping underperforms
+    merged = existing[:]  # keep old
+    merged.extend(new_only)
+
+    # If you ever choose to collapse by tag (you said you don’t want this), you could do it here.
+    if not KEEP_DUPLICATE_TAGS:
+        best_by_tag: Dict[str, Dict[str, str]] = {}
+        for r in merged:
+            best_by_tag.setdefault(r["tag"], r)
+        merged = list(best_by_tag.values())
+
+    if len(merged) < MIN_TOTAL_RECORDS_TO_WRITE or len(new_only) < MIN_NEW_RECORDS_TO_WRITE:
+        print("\nREFUSING TO WRITE (safety guard tripped).")
+        print(f"  merged would be {len(merged)} records")
+        print(f"  new_only is {len(new_only)} records")
+        print("  Keeping existing tags.json unchanged.")
+        return
+
+    write_backup(OUT_FILE)
+
+    with open(OUT_FILE, "w", encoding="utf-8") as f:
+        json.dump(merged, f, indent=2, ensure_ascii=False)
+
+    print(f"\nWROTE {len(merged)} records to {OUT_FILE}")
 
 if __name__ == "__main__":
     main()
