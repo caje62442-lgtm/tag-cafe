@@ -136,19 +136,33 @@ async def on_ready():
 @bot.tree.command(name="searchtag", description="Search for a guild tag and get an invite.")
 @app_commands.describe(tag="The tag to search for (example: PAWS)")
 async def searchtag(interaction: discord.Interaction, tag: str):
-    data = load_tags()
-    results = search_tags(tag, data)
+    # Respond immediately so Discord doesn't time out
+    await interaction.response.defer(ephemeral=True)
 
-    if not results:
-        await interaction.response.send_message(
-            f"No matches found for **{tag.strip().upper()}**.",
+    try:
+        data = load_tags()
+        results = search_tags(tag, data)
+
+        if not results:
+            await interaction.followup.send(
+                f"No matches found for **{tag.strip().upper()}**.",
+                ephemeral=True
+            )
+            return
+
+        view = TagPager(results=results, owner_id=interaction.user.id)
+        emb = make_embed(results[0], 0, len(results))
+
+        # Show results publicly (or change to ephemeral=True if you want it private)
+        await interaction.followup.send(embed=emb, view=view, ephemeral=False)
+
+    except Exception as e:
+        # Send the error to you (and log it) instead of timing out
+        print("ERROR in /searchtag:", repr(e))
+        await interaction.followup.send(
+            f"Error: `{type(e).__name__}`. Check Render logs.",
             ephemeral=True
         )
-        return
-
-    view = TagPager(results=results, owner_id=interaction.user.id)
-    emb = make_embed(results[0], 0, len(results))
-    await interaction.response.send_message(embed=emb, view=view)
 
 token = os.getenv("DISCORD_TOKEN")
 if not token:
