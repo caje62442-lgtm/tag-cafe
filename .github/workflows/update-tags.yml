@@ -11,6 +11,7 @@ permissions:
 jobs:
   build-tags:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -27,11 +28,13 @@ jobs:
       - name: Run ingestion
         env:
           DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
-          MAX_TAG_PAGES: "50"
-          MAX_PAGES_PER_TAG: "2"
-          SCRAPE_SLEEP: "1.0"
+          REDDIT_CLIENT_ID: ${{ secrets.REDDIT_CLIENT_ID }}
+          REDDIT_CLIENT_SECRET: ${{ secrets.REDDIT_CLIENT_SECRET }}
+          REDDIT_USER_AGENT: "tag-cafe-bot"
+          REDDIT_POST_LIMIT: "200"
+          SCRAPE_SLEEP: "0.3"
         run: |
-         python ingest_reddit.py
+          python ingest_reddit.py
 
       - name: Commit tags.json if changed
         run: |
