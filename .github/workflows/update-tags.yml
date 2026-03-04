@@ -31,7 +31,7 @@ jobs:
           MAX_PAGES_PER_TAG: "2"
           SCRAPE_SLEEP: "1.0"
         run: |
-         python ingest_disboard.py
+         python ingest_reddit.py
 
       - name: Commit tags.json if changed
         run: |
