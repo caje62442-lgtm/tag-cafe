@@ -36,7 +36,7 @@ def load_tags() -> List[Dict[str, Any]]:
     with open(TAGS_FILE, "r", encoding="utf-8") as f:
         data = json.load(f)
 
-    # Accept list format: [{"tag":"PAWS","invite":"https://discord.gg/..."}]
+    # list format: [{"tag":"PAWS","invite":"https://discord.gg/..."}]
     if isinstance(data, list):
         out = []
         for item in data:
@@ -48,7 +48,7 @@ def load_tags() -> List[Dict[str, Any]]:
                 out.append({"tag": tag, "invite": invite})
         return out
 
-    # Also accept dict format: {"PAWS":"https://discord.gg/..."}
+    # dict format: {"PAWS":"https://discord.gg/..."}
     if isinstance(data, dict):
         return [{"tag": str(k).upper(), "invite": str(v).strip()} for k, v in data.items() if k and v]
 
@@ -58,7 +58,6 @@ def search_tags(query: str, data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     q = query.strip().upper()
     if not q:
         return []
-    # Contains match so "PA" finds PAWS, etc.
     return [x for x in data if q in x["tag"]]
 
 # -----------------------------
@@ -75,10 +74,23 @@ def make_embed(entry: Dict[str, Any], index: int, total: int) -> discord.Embed:
 
 class TagPager(discord.ui.View):
     def __init__(self, results: List[Dict[str, Any]], owner_id: int):
-        super().__init__(timeout=180)  # 3 minutes
+        super().__init__(timeout=180)
         self.results = results
         self.owner_id = owner_id
         self.i = 0
+
+        # Create buttons manually so we can have a LINK button with a dynamic URL.
+        self.prev_button = discord.ui.Button(label="Previous", style=discord.ButtonStyle.secondary)
+        self.next_button = discord.ui.Button(label="Next", style=discord.ButtonStyle.secondary)
+        self.join_button = discord.ui.Button(label="Join Server", style=discord.ButtonStyle.link, url=self.results[0]["invite"])
+
+        self.prev_button.callback = self.on_prev
+        self.next_button.callback = self.on_next
+
+        self.add_item(self.prev_button)
+        self.add_item(self.join_button)
+        self.add_item(self.next_button)
+
         self._sync_buttons()
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
@@ -92,37 +104,28 @@ class TagPager(discord.ui.View):
 
     def _sync_buttons(self):
         total = len(self.results)
-        self.prev_btn.disabled = (total <= 1) or (self.i == 0)
-        self.next_btn.disabled = (total <= 1) or (self.i == total - 1)
+        self.prev_button.disabled = (total <= 1) or (self.i == 0)
+        self.next_button.disabled = (total <= 1) or (self.i == total - 1)
 
-        invite = self.results[self.i]["invite"]
-        # Update link button each time we move
-        self.join_btn.url = invite
+        # Update the Join link to match the current result
+        self.join_button.url = self.results[self.i]["invite"]
 
-    @discord.ui.button(label="Previous", style=discord.ButtonStyle.secondary)
-    async def prev_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+    async def on_prev(self, interaction: discord.Interaction):
         self.i -= 1
         self._sync_buttons()
         emb = make_embed(self.results[self.i], self.i, len(self.results))
         await interaction.response.edit_message(embed=emb, view=self)
 
-    @discord.ui.button(label="Join Server", style=discord.ButtonStyle.link, url="https://discord.gg/")
-    async def join_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
-        # Link buttons don’t trigger an interaction event, so this never runs.
-        pass
-
-    @discord.ui.button(label="Next", style=discord.ButtonStyle.secondary)
-    async def next_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+    async def on_next(self, interaction: discord.Interaction):
         self.i += 1
         self._sync_buttons()
         emb = make_embed(self.results[self.i], self.i, len(self.results))
         await interaction.response.edit_message(embed=emb, view=self)
 
     async def on_timeout(self):
-        # Disable paging buttons when expired; keep Join link.
-        for child in self.children:
-            if isinstance(child, discord.ui.Button) and child.style != discord.ButtonStyle.link:
-                child.disabled = True
+        # Disable paging buttons when expired; keep Join link active.
+        self.prev_button.disabled = True
+        self.next_button.disabled = True
 
 @bot.event
 async def on_ready():
@@ -133,36 +136,31 @@ async def on_ready():
     except Exception as e:
         print("Slash sync failed:", e)
 
+@bot.tree.command(name="ping", description="Test if the bot is alive")
+async def ping(interaction: discord.Interaction):
+    await interaction.response.send_message("Pong!", ephemeral=True)
+
 @bot.tree.command(name="searchtag", description="Search for a guild tag and get an invite.")
 @app_commands.describe(tag="The tag to search for (example: PAWS)")
 async def searchtag(interaction: discord.Interaction, tag: str):
-    # Respond immediately so Discord doesn't time out
+    # Defer to avoid the 3-second timeout in case Render is waking up.
     await interaction.response.defer(ephemeral=True)
 
-    try:
-        data = load_tags()
-        results = search_tags(tag, data)
+    data = load_tags()
+    results = search_tags(tag, data)
 
-        if not results:
-            await interaction.followup.send(
-                f"No matches found for **{tag.strip().upper()}**.",
-                ephemeral=True
-            )
-            return
-
-        view = TagPager(results=results, owner_id=interaction.user.id)
-        emb = make_embed(results[0], 0, len(results))
-
-        # Show results publicly (or change to ephemeral=True if you want it private)
-        await interaction.followup.send(embed=emb, view=view, ephemeral=False)
-
-    except Exception as e:
-        # Send the error to you (and log it) instead of timing out
-        print("ERROR in /searchtag:", repr(e))
+    if not results:
         await interaction.followup.send(
-            f"Error: `{type(e).__name__}`. Check Render logs.",
+            f"No matches found for **{tag.strip().upper()}**.",
             ephemeral=True
         )
+        return
+
+    view = TagPager(results=results, owner_id=interaction.user.id)
+    emb = make_embed(results[0], 0, len(results))
+
+    # Show the result publicly, but keep button control locked to the user.
+    await interaction.followup.send(embed=emb, view=view, ephemeral=False)
 
 token = os.getenv("DISCORD_TOKEN")
 if not token:
