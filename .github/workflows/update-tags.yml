@@ -11,7 +11,6 @@ permissions:
 jobs:
   build-tags:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -25,16 +24,17 @@ jobs:
         run: |
           pip install -r requirements_ingest.txt
 
-      - name: Run ingestion
+      - name: Run ingestion (discord.band)
         env:
           DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
-          REDDIT_CLIENT_ID: ${{ secrets.REDDIT_CLIENT_ID }}
-          REDDIT_CLIENT_SECRET: ${{ secrets.REDDIT_CLIENT_SECRET }}
-          REDDIT_USER_AGENT: "tag-cafe-bot"
-          REDDIT_POST_LIMIT: "200"
-          SCRAPE_SLEEP: "0.3"
+          MAX_PAGES: "50"
+          SCRAPE_SLEEP: "1.0"
+          ONLY_ASCII_TAGS: "1"
+          VALIDATE_INVITES: "1"
+          KEEP_DUPLICATE_TAGS: "1"
+          OUT_FILE: "tags.json"
         run: |
-          python ingest_reddit.py
+          python ingest_discordband.py
 
       - name: Commit tags.json if changed
         run: |
