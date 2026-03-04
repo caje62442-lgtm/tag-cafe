@@ -3,7 +3,7 @@ name: Update tags.json
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 9 * * *"  # daily at 09:00 UTC
+    - cron: "0 9 * * *" # daily at 09:00 UTC
 
 permissions:
   contents: write
@@ -22,17 +22,30 @@ jobs:
 
       - name: Install dependencies
         run: |
+          python -m pip install --upgrade pip
           pip install -r requirements_ingest.txt
 
       - name: Run ingestion (discord.band)
         env:
+          # Required only if VALIDATE_INVITES=1
           DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
-          MAX_PAGES: "50"
+
+          # Scraper tuning
+          MAX_PAGES_PER_SECTION: "50"
           SCRAPE_SLEEP: "1.0"
-          ONLY_ASCII_TAGS: "1"
-          VALIDATE_INVITES: "1"
-          KEEP_DUPLICATE_TAGS: "1"
+
+          # Safer to start with 0; turn on once stable.
+          VALIDATE_INVITES: "0"
+
+          # Safety guard: prevents overwriting tags.json with tiny output
+          MIN_TOTAL_RECORDS_TO_WRITE: "3000"
+          MIN_NEW_RECORDS_TO_WRITE: "200"
+
+          # Output file name (your repo uses tags.json)
           OUT_FILE: "tags.json"
+
+          # Keep multiple servers per same tag (so pager can cycle)
+          KEEP_DUPLICATE_TAGS: "1"
         run: |
           python ingest_discordband.py
 
