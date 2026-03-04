@@ -32,10 +32,6 @@ threading.Thread(target=run_web_server, daemon=True).start()
 TAGS_FILE = "tags.json"
 
 def load_tags() -> List[Dict[str, Any]]:
-    """Supports:
-    - list format: [{"tag":"PAWS","invite":"https://discord.gg/paws"}]
-    - dict format: {"PAWS":"https://discord.gg/paws"}
-    """
     if not os.path.exists(TAGS_FILE):
         return []
 
@@ -66,7 +62,6 @@ def search_tags(query: str, data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     q = query.strip().upper()
     if not q:
         return []
-    # Contains match so "PA" finds PAWS, etc.
     return [x for x in data if q in x["tag"]]
 
 # ======================
@@ -78,21 +73,18 @@ INVITE_RE = re.compile(
 )
 
 def extract_invite_code(invite: str) -> str:
-    """Accepts a full invite URL or a raw code."""
     invite = invite.strip()
     m = INVITE_RE.search(invite)
     if m:
         return m.group("code")
-    # If they stored just "paws" or "PAWS"
     return invite.strip().strip("/")
 
 async def fetch_invite_preview(bot: commands.Bot, invite_value: str) -> Dict[str, Optional[str]]:
-    """Returns basic preview fields (safe, minimal) for a given invite."""
     code = extract_invite_code(invite_value)
     try:
         inv = await bot.fetch_invite(code, with_counts=False)
         guild = inv.guild
-        # discord.py returns an Asset for icon if present
+
         icon_url = None
         if guild and getattr(guild, "icon", None):
             icon_url = guild.icon.url
@@ -100,16 +92,13 @@ async def fetch_invite_preview(bot: commands.Bot, invite_value: str) -> Dict[str
         return {
             "code": code,
             "guild_name": guild.name if guild else None,
-            "guild_id": str(guild.id) if guild else None,
             "icon_url": icon_url,
             "invite_url": f"https://discord.gg/{code}",
         }
     except Exception:
-        # If invite is invalid/expired or API fails, fall back to bare link
         return {
             "code": code,
             "guild_name": None,
-            "guild_id": None,
             "icon_url": None,
             "invite_url": invite_value if invite_value.startswith("http") else f"https://discord.gg/{code}",
         }
@@ -120,36 +109,31 @@ async def fetch_invite_preview(bot: commands.Bot, invite_value: str) -> Dict[str
 intents = discord.Intents.default()
 bot = commands.Bot(command_prefix="!", intents=intents)
 
-# Optional: set GUILD_ID in Render env vars for instant command updates
-# If not set, it will sync globally (can take longer to show new commands).
 GUILD_ID_ENV = os.getenv("GUILD_ID")
 GUILD_ID = int(GUILD_ID_ENV) if GUILD_ID_ENV and GUILD_ID_ENV.isdigit() else None
 
 def make_embed(entry: Dict[str, Any], preview: Dict[str, Optional[str]], index: int, total: int) -> discord.Embed:
     tag = entry["tag"]
     invite_url = preview.get("invite_url") or entry["invite"]
-
-    guild_name = preview.get("guild_name")
+    guild_name = preview.get("guild_name") or "Unknown server"
     icon_url = preview.get("icon_url")
 
-    # Clean, minimal layout
-    description_lines = []
-    if guild_name:
-        description_lines.append(f"**Server:** {guild_name}")
-    description_lines.append(f"[Join this server]({invite_url})")
-
+    # Bigger "card" layout: title + multiple fields
     emb = discord.Embed(
-        title=f"[{tag}]",
-        description="\n".join(description_lines),
-        color=0x2B2D31  # subtle, neutral
+        title=f"Guild Tag: {tag}",
+        description="",
+        color=0x5865F2  # Discord blurple feels “native”
     )
+
+    emb.add_field(name="Server", value=guild_name, inline=False)
+    emb.add_field(name="Invite", value=f"[Join this server]({invite_url})\n{invite_url}", inline=False)
 
     if icon_url:
         emb.set_thumbnail(url=icon_url)
 
-    # Only show paging footer if multiple results
+    # Only show pager text if there are multiple results
     if total > 1:
-        emb.set_footer(text=f"{index + 1}/{total}")
+        emb.set_footer(text=f"Result {index + 1} of {total}")
 
     return emb
 
@@ -159,10 +143,9 @@ class TagPager(discord.ui.View):
         self.results = results
         self.owner_id = owner_id
         self.i = 0
-
-        # Cache invite previews per index so we fetch once.
         self.preview_cache: Dict[int, Dict[str, Optional[str]]] = {}
 
+        # Button order: Previous | Next | Join Server (cleaner)
         self.prev_button = discord.ui.Button(label="Previous", style=discord.ButtonStyle.secondary)
         self.next_button = discord.ui.Button(label="Next", style=discord.ButtonStyle.secondary)
         self.join_button = discord.ui.Button(label="Join Server", style=discord.ButtonStyle.link, url="https://discord.gg/")
@@ -171,8 +154,8 @@ class TagPager(discord.ui.View):
         self.next_button.callback = self.on_next
 
         self.add_item(self.prev_button)
-        self.add_item(self.join_button)
         self.add_item(self.next_button)
+        self.add_item(self.join_button)
 
         self._sync_buttons()
 
@@ -220,7 +203,6 @@ class TagPager(discord.ui.View):
         await self._render_current(interaction)
 
     async def on_timeout(self):
-        # Disable paging buttons after timeout; keep Join link active.
         self.prev_button.disabled = True
         self.next_button.disabled = True
 
@@ -245,7 +227,6 @@ async def ping(interaction: discord.Interaction):
 @bot.tree.command(name="searchtag", description="Search for a guild tag and get an invite.")
 @app_commands.describe(tag="The tag to search for (example: PAWS)")
 async def searchtag(interaction: discord.Interaction, tag: str):
-    # Defer immediately to avoid the 3-second timeout (especially when Render wakes up)
     await interaction.response.defer(ephemeral=True)
 
     data = load_tags()
@@ -259,13 +240,11 @@ async def searchtag(interaction: discord.Interaction, tag: str):
         return
 
     view = TagPager(results=results, owner_id=interaction.user.id)
-    # Pre-fetch the first invite preview for a clean first render
+
     preview0 = await view._get_preview(0)
     view.join_button.url = preview0.get("invite_url") or results[0]["invite"]
 
     emb = make_embed(results[0], preview0, 0, len(results))
-
-    # Show publicly, but keep interaction locked to the user via interaction_check
     await interaction.followup.send(embed=emb, view=view, ephemeral=False)
 
 token = os.getenv("DISCORD_TOKEN")
