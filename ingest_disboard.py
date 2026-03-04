@@ -43,6 +43,10 @@ def extract_server_links_from_tag_page(tag: str, page: int) -> List[str]:
     url = TAG_URL_TMPL.format(tag=tag, page=page)
     soup = get_soup(url)
 
+    print("TAG PAGE URL:", url)
+    print("TITLE:", soup.title.string if soup.title else "NO TITLE")
+    print("HTML SNIP:", soup.get_text(" ", strip=True)[:200])
+
     links: List[str] = []
     for a in soup.find_all("a", href=True):
         href = a["href"]
