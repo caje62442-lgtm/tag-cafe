@@ -11,41 +11,61 @@ import discord
 
 BASE = "https://disboard.org"
 SLEEP_SECONDS = float(os.getenv("SCRAPE_SLEEP", "1.0"))
-MAX_TAG_PAGES = int(os.getenv("MAX_TAG_PAGES", "20"))          # how many tag pages to scrape
-MAX_SERVERS_PER_TAG = int(os.getenv("MAX_SERVERS_PER_TAG", "50"))  # cap per tag page
-MAX_TAGS = int(os.getenv("MAX_TAGS", "50"))                    # how many tag keywords to process
+MAX_TAG_PAGES = int(os.getenv("MAX_TAG_PAGES", "20"))              # how many tag pages to scrape per tag
+MAX_SERVERS_PER_TAG = int(os.getenv("MAX_SERVERS_PER_TAG", "50"))  # cap server pages per tag page
+MAX_TAGS = int(os.getenv("MAX_TAGS", "50"))                        # how many tag keywords to process
 
 HEADERS = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36",
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/120.0 Safari/537.36"
+    ),
     "Accept-Language": "en-US,en;q=0.9",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "Connection": "keep-alive",
 }
 
 # Example tag page format on DISBOARD:
-# https://disboard.org/servers/tag/<tag>?sort=-member_count
+# https://disboard.org/servers/tag/<tag>?sort=-member_count&page=<n>
 TAG_URL_TMPL = BASE + "/servers/tag/{tag}?sort=-member_count&page={page}"
 
-INVITE_RE = re.compile(r"(https?://(?:www\.)?(?:discord\.gg|discord\.com/invite)/[A-Za-z0-9-]+)", re.IGNORECASE)
+INVITE_RE = re.compile(
+    r"(https?://(?:www\.)?(?:discord\.gg|discord\.com/invite)/[A-Za-z0-9-]+)",
+    re.IGNORECASE,
+)
 
-# Put whatever tags you want to start with.
-# You can grow this list over time, or generate it by scraping DISBOARD’s tag index later.
+# Starter tags (edit as you like)
 SEED_TAGS = [
     "gaming", "anime", "music", "memes", "roleplay", "art", "minecraft", "valorant",
     "genshin-impact", "fortnite", "csgo", "league-of-legends", "roblox", "pokemon",
     "technology", "coding", "community", "social", "chill", "18", "movies", "books",
 ]
 
+
 def get_soup(url: str) -> BeautifulSoup:
+    """
+    Fetch HTML and ALWAYS log status + a small snippet.
+    This makes it obvious when DISBOARD blocks GitHub Actions (403/Cloudflare/etc.).
+    """
     r = requests.get(url, headers=HEADERS, timeout=30)
+
+    # Always log response diagnostics (even on non-200).
+    text = (r.text or "").replace("\n", " ").strip()
+    print(f"GET {url} -> {r.status_code}")
+    print("RESP SNIP:", text[:200])
+
+    # If blocked, this will raise (and our caller will log the exception)
     r.raise_for_status()
     return BeautifulSoup(r.text, "html.parser")
+
 
 def extract_server_links_from_tag_page(tag: str, page: int) -> List[str]:
     url = TAG_URL_TMPL.format(tag=tag, page=page)
     soup = get_soup(url)
 
-    print("TAG PAGE URL:", url)
-    print("TITLE:", soup.title.string if soup.title else "NO TITLE")
-    print("HTML SNIP:", soup.get_text(" ", strip=True)[:200])
+    # Optional extra visibility (keep if you want)
+    print("TAG PAGE TITLE:", soup.title.string if soup.title else "NO TITLE")
 
     links: List[str] = []
     for a in soup.find_all("a", href=True):
@@ -55,13 +75,14 @@ def extract_server_links_from_tag_page(tag: str, page: int) -> List[str]:
             links.append(urljoin(BASE, href))
 
     # de-dupe while preserving order
-    seen = set()
-    out = []
+    seen: Set[str] = set()
+    out: List[str] = []
     for x in links:
         if x not in seen:
             seen.add(x)
             out.append(x)
     return out
+
 
 def extract_invite_from_server_page(server_url: str) -> Optional[str]:
     soup = get_soup(server_url)
@@ -78,6 +99,7 @@ def extract_invite_from_server_page(server_url: str) -> Optional[str]:
             return href
 
     return None
+
 
 async def validate_invites(records: List[Dict[str, str]]) -> List[Dict[str, str]]:
     token = os.getenv("DISCORD_TOKEN")
@@ -106,42 +128,57 @@ async def validate_invites(records: List[Dict[str, str]]) -> List[Dict[str, str]
     await client.close()
     return valid
 
+
 def write_tags_json(records: List[Dict[str, str]], path: str = "tags.json"):
     with open(path, "w", encoding="utf-8") as f:
         json.dump(records, f, indent=2, ensure_ascii=False)
     print(f"Wrote {len(records)} records to {path}")
 
+
 def main():
     tags = SEED_TAGS[:MAX_TAGS]
     all_records: List[Dict[str, str]] = []
 
+    print("RUN CONFIG:",
+          f"MAX_TAGS={MAX_TAGS}",
+          f"MAX_TAG_PAGES={MAX_TAG_PAGES}",
+          f"MAX_SERVERS_PER_TAG={MAX_SERVERS_PER_TAG}",
+          f"SLEEP_SECONDS={SLEEP_SECONDS}",
+          f"SEED_TAGS_COUNT={len(SEED_TAGS)}")
+
     for tag in tags:
+        print(f"\n=== TAG: {tag} ===")
         for page in range(1, MAX_TAG_PAGES + 1):
             try:
                 server_links = extract_server_links_from_tag_page(tag, page)
-            except Exception:
+            except Exception as e:
+                print(f"ERROR fetching tag page tag={tag} page={page}: {repr(e)}")
                 break
 
             if not server_links:
+                print(f"No server links found for tag={tag} page={page}. Stopping this tag.")
                 break
 
             server_links = server_links[:MAX_SERVERS_PER_TAG]
+            print(f"Found {len(server_links)} server pages on tag={tag} page={page} (capped).")
+
             for s in server_links:
                 try:
                     invite = extract_invite_from_server_page(s)
                     if invite:
                         all_records.append({"tag": tag.upper(), "invite": invite})
-                except Exception:
-                    pass
+                except Exception as e:
+                    print(f"ERROR fetching server page {s}: {repr(e)}")
 
                 time.sleep(SLEEP_SECONDS)
 
-    print(f"Collected {len(all_records)} candidates before validation.")
+    print(f"\nCollected {len(all_records)} candidates before validation.")
 
     import asyncio
     valid = asyncio.run(validate_invites(all_records))
     print(f"Validated {len(valid)} invites.")
     write_tags_json(valid)
+
 
 if __name__ == "__main__":
     main()
