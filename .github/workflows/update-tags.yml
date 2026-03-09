@@ -15,7 +15,7 @@ concurrency:
 jobs:
   build-tags:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 120
 
     steps:
       - name: Checkout
@@ -36,23 +36,35 @@ jobs:
       - name: Run ingestion
         env:
           OUT_FILE: "tags.json"
+
+          # Slow and careful is fine for ingest.
           SCRAPE_SLEEP: "0.75"
           REQUEST_TIMEOUT: "30"
 
-          # Leave off unless you really want Discord invite validation.
+          # Optional Discord-side invite validation.
+          # Leave off unless you want the extra validation pass.
           VALIDATE_INVITES: "0"
           DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
 
-          # Safety guards
-          MIN_TOTAL_RECORDS_TO_WRITE: "1000"
-          MIN_NEW_RECORDS_TO_WRITE: "1"
+          # You want a full fresh snapshot each run, not merge-only behavior.
+          REPLACE_FULL_SNAPSHOT: "1"
 
-          # Keep multiple servers for the same tag
+          # Keep multiple servers per same tag.
           KEEP_DUPLICATE_TAGS: "1"
+
+          # Conservative write guards.
+          # These should protect against catastrophic under-scrapes,
+          # but should not require large "new record" counts.
+          MIN_TOTAL_RECORDS_TO_WRITE: "1000"
+          MIN_NEW_RECORDS_TO_WRITE: "0"
+
+          # Discovery limits
+          MAX_DISCOVERED_SECTIONS: "100"
+          MAX_PAGES_PER_SECTION_HARD_LIMIT: "1000"
         run: |
           python ingest_discordband.py
 
-      - name: Commit tags.json if changed
+      - name: Commit changed files
         run: |
           git config user.name "tag-cafe-bot"
           git config user.email "actions@users.noreply.github.com"
