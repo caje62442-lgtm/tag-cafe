@@ -1,6 +1,7 @@
+import asyncio
+import json
 import os
 import re
-import json
 import time
 from typing import Any, Dict, List, Optional, Set, Tuple
 from urllib.parse import urljoin, urlparse
@@ -12,14 +13,14 @@ BASE = "https://discord.band"
 TAGS_ROOT = f"{BASE}/tags"
 OUT_FILE = os.getenv("OUT_FILE", "tags.json")
 
-SCRAPE_SLEEP = float(os.getenv("SCRAPE_SLEEP", "0.75"))
+SCRAPE_SLEEP = float(os.getenv("SCRAPE_SLEEP", "0.5"))
 REQUEST_TIMEOUT = float(os.getenv("REQUEST_TIMEOUT", "30"))
 
 VALIDATE_INVITES = os.getenv("VALIDATE_INVITES", "0").strip() == "1"
 KEEP_DUPLICATE_TAGS = os.getenv("KEEP_DUPLICATE_TAGS", "1").strip() not in ("0", "false", "False")
 REPLACE_FULL_SNAPSHOT = os.getenv("REPLACE_FULL_SNAPSHOT", "1").strip() not in ("0", "false", "False")
 
-MIN_TOTAL_RECORDS_TO_WRITE = int(os.getenv("MIN_TOTAL_RECORDS_TO_WRITE", "1000"))
+MIN_TOTAL_RECORDS_TO_WRITE = int(os.getenv("MIN_TOTAL_RECORDS_TO_WRITE", "1"))
 MIN_NEW_RECORDS_TO_WRITE = int(os.getenv("MIN_NEW_RECORDS_TO_WRITE", "0"))
 
 MAX_DISCOVERED_SECTIONS = int(os.getenv("MAX_DISCOVERED_SECTIONS", "100"))
@@ -41,36 +42,57 @@ INVITE_RE = re.compile(
     r"(?:https?://)?(?:www\.)?(?:discord\.gg|discord(?:app)?\.com/invite|discord\.com/invite)/(?P<code>[A-Za-z0-9-]+)",
     re.IGNORECASE,
 )
-
 PAGE_PATH_RE = re.compile(r"/page/(\d+)(?:/)?$", re.IGNORECASE)
+SERVER_ID_RE = re.compile(r"^\d{15,22}$")
 
-# Discord.band tags are 2–4 characters.
-# Keep it strict. Anything longer is not a valid tag for this dataset.
-TAG_RE = re.compile(r"^[^\s]{2,4}$")
+# Discord.band tag filters are explicitly 2, 3, and 4 characters.
+# Keep the ingest strict.
+TAG_RE = re.compile(r"^.{2,4}$", re.DOTALL)
 
 BLOCKED_TAG_TOKENS = {
     "join",
-    "login",
+    "find",
+    "more",
+    "next",
+    "page",
+    "last",
+    "tags",
+    "tag",
     "discord",
     "server",
     "servers",
-    "tags",
-    "tag",
-    "members",
     "member",
+    "members",
     "online",
+    "login",
     "new",
-    "alphabet",
-    "number",
-    "numbers",
-    "symbol",
-    "symbols",
-    "unicode",
     "only",
-    "page",
-    "invite",
-    "find",
-    "more",
+    "add",
+    "list",
+    "filter",
+    "search",
+    "premium",
+    "statistics",
+}
+
+SEED_SECTIONS = {
+    f"{BASE}/tags/alphabet",
+    f"{BASE}/tags/new",
+    f"{BASE}/tags/number",
+    f"{BASE}/tags/symbol",
+    f"{BASE}/tags/unicode-only",
+    f"{BASE}/tags/lowercase-only",
+    f"{BASE}/tags/uppercase-only",
+    f"{BASE}/tags/unique",
+    f"{BASE}/tags/english",
+    f"{BASE}/tags/non-english",
+    f"{BASE}/tags/chinese",
+    f"{BASE}/tags/japanese",
+    f"{BASE}/tags/korean",
+    f"{BASE}/tags/russian",
+    f"{BASE}/tags/2-characters",
+    f"{BASE}/tags/3-characters",
+    f"{BASE}/tags/4-characters",
 }
 
 session = requests.Session()
@@ -82,22 +104,12 @@ def sleep() -> None:
         time.sleep(SCRAPE_SLEEP)
 
 
-def get_soup(url: str) -> BeautifulSoup:
-    response = session.get(url, timeout=REQUEST_TIMEOUT)
-    response.raise_for_status()
-    return BeautifulSoup(response.text, "html.parser")
-
-
-def absolute_url(href: str, base_url: str = BASE) -> str:
-    return urljoin(base_url, href.strip())
-
-
 def clean_text(value: str) -> str:
     return " ".join((value or "").split()).strip()
 
 
-def normalize_tag(tag: str) -> str:
-    return tag.strip()
+def absolute_url(href: str, base_url: str = BASE) -> str:
+    return urljoin(base_url, href.strip())
 
 
 def normalize_invite(url_or_code: str) -> Optional[str]:
@@ -109,9 +121,14 @@ def normalize_invite(url_or_code: str) -> Optional[str]:
     if match:
         return f"https://discord.gg/{match.group('code')}"
 
-    cleaned = raw.strip("/").split("/")[-1]
-    if cleaned and re.fullmatch(r"[A-Za-z0-9-]+", cleaned):
-        return f"https://discord.gg/{cleaned}"
+    if raw.startswith("/join/"):
+        code = raw.rstrip("/").split("/")[-1]
+        if code:
+            return f"https://discord.gg/{code}"
+
+    parsed = urlparse(raw)
+    if not parsed.scheme and not parsed.netloc and "/" not in raw and re.fullmatch(r"[A-Za-z0-9-]+", raw):
+        return f"https://discord.gg/{raw}"
 
     return None
 
@@ -124,10 +141,12 @@ def is_internal_url(url: str) -> bool:
 
 
 def is_plausible_tag(token: str) -> bool:
-    value = clean_text(token)
+    value = token.strip()
     if not value:
         return False
     if not TAG_RE.fullmatch(value):
+        return False
+    if any(ch.isspace() for ch in value):
         return False
 
     lower = value.lower()
@@ -137,11 +156,40 @@ def is_plausible_tag(token: str) -> bool:
         return False
     if "/" in value:
         return False
+    if SERVER_ID_RE.fullmatch(value):
+        return False
 
     return True
 
 
-def load_existing(path: str) -> List[Dict[str, Any]]:
+def tag_score(value: str) -> Tuple[int, int, int, int, str]:
+    letters = sum(ch.isalpha() for ch in value)
+    uppers = sum(ch.isupper() for ch in value)
+    alnum = sum(ch.isalnum() for ch in value)
+    length_pref = 3 if len(value) == 4 else 2 if len(value) == 3 else 1
+    return (
+        length_pref,
+        1 if letters and uppers == letters else 0,
+        alnum,
+        letters,
+        value,
+    )
+
+
+def get_soup(url: str) -> BeautifulSoup:
+    response = session.get(url, timeout=REQUEST_TIMEOUT)
+    response.raise_for_status()
+    return BeautifulSoup(response.text, "html.parser")
+
+
+def ensure_json_file_exists(path: str) -> None:
+    if os.path.exists(path):
+        return
+    with open(path, "w", encoding="utf-8") as file:
+        json.dump([], file)
+
+
+def safe_load_json_array(path: str) -> List[Dict[str, Any]]:
     if not os.path.exists(path):
         return []
 
@@ -154,14 +202,13 @@ def load_existing(path: str) -> List[Dict[str, Any]]:
     if not isinstance(data, list):
         return []
 
-    output: List[Dict[str, Any]] = []
+    out: List[Dict[str, Any]] = []
     for item in data:
         if not isinstance(item, dict):
             continue
 
-        tag = normalize_tag(str(item.get("tag", "")).strip())
+        tag = str(item.get("tag", "")).strip()
         invite = normalize_invite(str(item.get("invite", "")).strip())
-
         if not tag or not invite:
             continue
         if not is_plausible_tag(tag):
@@ -170,9 +217,9 @@ def load_existing(path: str) -> List[Dict[str, Any]]:
         normalized = dict(item)
         normalized["tag"] = tag
         normalized["invite"] = invite
-        output.append(normalized)
+        out.append(normalized)
 
-    return output
+    return out
 
 
 def write_backup(path: str) -> None:
@@ -188,6 +235,15 @@ def write_backup(path: str) -> None:
         print(f"Backup written: {backup_path}")
     except Exception as exc:
         print(f"Backup failed: {exc!r}")
+
+
+def atomic_write_json(path: str, data: List[Dict[str, Any]]) -> None:
+    tmp_path = f"{path}.tmp"
+    with open(tmp_path, "w", encoding="utf-8") as file:
+        json.dump(data, file, indent=2, ensure_ascii=False)
+        file.flush()
+        os.fsync(file.fileno())
+    os.replace(tmp_path, path)
 
 
 def dedupe_by_tag_invite(records: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
@@ -212,30 +268,7 @@ def collapse_by_tag(records: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
 
 
 def discover_section_urls(root_soup: BeautifulSoup) -> List[str]:
-    discovered: Set[str] = set()
-
-    seeds = {
-        f"{BASE}/tags/alphabet",
-        f"{BASE}/tags/new",
-        f"{BASE}/tags/number",
-        f"{BASE}/tags/symbol",
-        f"{BASE}/tags/unicode-only",
-        f"{BASE}/tags/2-characters",
-        f"{BASE}/tags/3-characters",
-        f"{BASE}/tags/4-characters",
-        f"{BASE}/tags/lowercase-only",
-        f"{BASE}/tags/uppercase-only",
-        f"{BASE}/tags/unique",
-        f"{BASE}/tags/english",
-        f"{BASE}/tags/non-english",
-        f"{BASE}/tags/chinese",
-        f"{BASE}/tags/japanese",
-        f"{BASE}/tags/korean",
-        f"{BASE}/tags/russian",
-    }
-
-    for seed in seeds:
-        discovered.add(seed)
+    discovered: Set[str] = set(SEED_SECTIONS)
 
     for anchor in root_soup.find_all("a", href=True):
         href = clean_text(anchor.get("href", ""))
@@ -294,10 +327,7 @@ def discover_last_page(section_url: str, first_soup: BeautifulSoup) -> int:
             if match:
                 max_page = max(max_page, int(match.group(1)))
 
-    if max_page > MAX_PAGES_PER_SECTION_HARD_LIMIT:
-        max_page = MAX_PAGES_PER_SECTION_HARD_LIMIT
-
-    return max_page
+    return min(max_page, MAX_PAGES_PER_SECTION_HARD_LIMIT)
 
 
 def section_page_url(section_url: str, page: int) -> str:
@@ -306,7 +336,28 @@ def section_page_url(section_url: str, page: int) -> str:
     return section_url.rstrip("/") + f"/page/{page}"
 
 
-def find_smallest_single_invite_container(anchor: Tag) -> Tag:
+def resolve_invite_from_href(href: str) -> Optional[str]:
+    href = clean_text(href)
+    if not href:
+        return None
+
+    direct = normalize_invite(href)
+    if direct:
+        return direct
+
+    full = absolute_url(href, BASE)
+
+    try:
+        response = session.get(full, timeout=REQUEST_TIMEOUT, allow_redirects=True)
+        response.raise_for_status()
+        final_url = response.url
+    except Exception:
+        return None
+
+    return normalize_invite(final_url)
+
+
+def find_smallest_join_container(anchor: Tag) -> Tag:
     current: Tag = anchor
     best: Tag = anchor
 
@@ -315,12 +366,14 @@ def find_smallest_single_invite_container(anchor: Tag) -> Tag:
         if not isinstance(parent, Tag):
             break
 
-        invite_count = 0
+        join_count = 0
         for maybe in parent.find_all("a", href=True):
-            if normalize_invite(clean_text(maybe.get("href", ""))):
-                invite_count += 1
+            text = clean_text(maybe.get_text(" ", strip=True)).lower()
+            href = clean_text(maybe.get("href", ""))
+            if text == "join" or href.startswith("/join/") or normalize_invite(href):
+                join_count += 1
 
-        if invite_count == 1:
+        if join_count == 1:
             best = parent
             current = parent
             continue
@@ -330,89 +383,137 @@ def find_smallest_single_invite_container(anchor: Tag) -> Tag:
     return best
 
 
-def tag_from_card_structure(container: Tag) -> Optional[str]:
-    """
-    Extract the displayed tag from the server card.
+def visible_text_of_node(node: Tag) -> str:
+    return node.get_text(" ", strip=True).strip()
 
-    Discord.band cards render a small icon/avatar, then the visible short tag token,
-    then the server name below it. We only trust short standalone text nodes from
-    the immediate card structure and image alt/title values that also satisfy 2–4 chars.
+
+def top_row_tag_from_second_image(container: Tag) -> Optional[str]:
     """
+    Canonical extraction strategy:
+    - find all images inside the card
+    - the first image is usually the server image
+    - the second image is usually the tag image
+    - trust the second image alt/title first
+    - then trust the immediate visible short text right after that image
+    """
+    images = container.find_all("img", recursive=True)
+    if len(images) < 2:
+        return None
+
+    tag_image = images[1]
     candidates: List[str] = []
 
-    # Strongest signal: short text directly attached to compact elements near the top.
-    for element in container.find_all(["span", "strong", "b", "div", "a", "p"], recursive=True):
-        text = clean_text(element.get_text(" ", strip=True))
+    for attr in ("alt", "title"):
+        value = tag_image.get(attr, "")
+        value = value.strip()
+        if is_plausible_tag(value):
+            candidates.append(value)
+
+    # Look at nearby siblings after the tag image.
+    for sibling in tag_image.next_siblings:
+        if isinstance(sibling, Tag):
+            text = visible_text_of_node(sibling)
+        else:
+            text = str(sibling).strip()
+
+        text = text.strip()
         if not text:
             continue
-        if "\n" in text:
-            continue
-        if " " in text:
-            continue
-        if is_plausible_tag(text):
-            candidates.append(text)
 
-    # Also trust image alt/title values, but still enforce 2–4 chars.
-    for image in container.find_all("img", recursive=True):
-        for attr in ("alt", "title"):
-            value = clean_text(image.get(attr, ""))
-            if is_plausible_tag(value):
-                candidates.append(value)
+        # Only trust the first compact visible token after the image.
+        token = text.split()[0].strip()
+        if is_plausible_tag(token):
+            candidates.append(token)
+
+        # Once we hit any meaningful text, stop walking farther.
+        break
 
     if not candidates:
         return None
 
-    # Prefer:
-    # 1) uppercase 4-char tokens,
-    # 2) uppercase 3-char tokens,
-    # 3) any 4-char token,
-    # 4) anything else valid.
-    def score(value: str) -> Tuple[int, int, int, str]:
-        length = len(value)
-        is_upper = int(value.upper() == value and any(ch.isalpha() for ch in value))
-        return (
-            1 if length == 4 else 0,
-            is_upper,
-            1 if length == 3 else 0,
-            value,
-        )
-
-    best = sorted(set(candidates), key=score, reverse=True)[0]
-    return normalize_tag(best)
+    return sorted(set(candidates), key=tag_score, reverse=True)[0]
 
 
-def extract_name_candidate(container: Tag, tag_value: Optional[str]) -> Optional[str]:
-    for element in container.find_all(["h1", "h2", "h3", "strong", "b", "div", "p"], recursive=True):
-        text = clean_text(element.get_text(" ", strip=True))
+def fallback_short_tag_candidates(container: Tag) -> List[str]:
+    candidates: List[str] = []
+
+    for image in container.find_all("img", recursive=True):
+        for attr in ("alt", "title"):
+            value = image.get(attr, "").strip()
+            if is_plausible_tag(value):
+                candidates.append(value)
+
+    for element in container.find_all(["span", "strong", "b", "a", "div", "p", "small"], recursive=True):
+        text = visible_text_of_node(element)
+        if not text or " " in text:
+            continue
+        if is_plausible_tag(text):
+            candidates.append(text)
+
+    return candidates
+
+
+def choose_card_tag(container: Tag) -> Optional[str]:
+    primary = top_row_tag_from_second_image(container)
+    if primary:
+        return primary
+
+    fallback = fallback_short_tag_candidates(container)
+    if fallback:
+        return sorted(set(fallback), key=tag_score, reverse=True)[0]
+
+    return None
+
+
+def extract_server_name(container: Tag, tag_value: Optional[str]) -> Optional[str]:
+    candidates: List[str] = []
+
+    for element in container.find_all(["h1", "h2", "h3", "strong", "b", "div", "p", "a", "span"], recursive=True):
+        text = visible_text_of_node(element)
         if not text:
             continue
         if tag_value and text == tag_value:
             continue
         if is_plausible_tag(text):
             continue
-        if len(text) < 2:
+        if SERVER_ID_RE.fullmatch(text):
             continue
-        if len(text) > 120:
+        if len(text) < 2 or len(text) > 120:
             continue
-        return text
-    return None
+        candidates.append(text)
+
+    if not candidates:
+        return None
+
+    def score_name(value: str) -> Tuple[int, int, str]:
+        return (
+            1 if 3 <= len(value) <= 40 else 0,
+            -abs(len(value) - 16),
+            value,
+        )
+
+    return sorted(set(candidates), key=score_name, reverse=True)[0]
 
 
 def extract_list_page_records(soup: BeautifulSoup, section_url: str) -> List[Dict[str, Any]]:
     records: List[Dict[str, Any]] = []
     seen_pairs: Set[Tuple[str, str]] = set()
 
+    join_anchors: List[Tag] = []
     for anchor in soup.find_all("a", href=True):
+        text = clean_text(anchor.get_text(" ", strip=True)).lower()
         href = clean_text(anchor.get("href", ""))
-        invite = normalize_invite(href)
+        if text == "join" or href.startswith("/join/") or normalize_invite(href):
+            join_anchors.append(anchor)
+
+    for anchor in join_anchors:
+        href = clean_text(anchor.get("href", ""))
+        invite = resolve_invite_from_href(href)
         if not invite:
             continue
 
-        if not isinstance(anchor, Tag):
-            continue
-
-        container = find_smallest_single_invite_container(anchor)
-        tag_value = tag_from_card_structure(container)
+        container = find_smallest_join_container(anchor)
+        tag_value = choose_card_tag(container)
 
         if not tag_value:
             continue
@@ -428,9 +529,9 @@ def extract_list_page_records(soup: BeautifulSoup, section_url: str) -> List[Dic
             {
                 "tag": tag_value,
                 "invite": invite,
-                "server_name": extract_name_candidate(container, tag_value),
+                "server_name": extract_server_name(container, tag_value),
                 "source_section": section_url,
-                "tag_source": "list_card",
+                "tag_source": "top_row",
             }
         )
 
@@ -501,6 +602,8 @@ def build_output_records(existing: List[Dict[str, Any]], scraped: List[Dict[str,
 
 
 def main() -> None:
+    ensure_json_file_exists(OUT_FILE)
+
     print("RUN CONFIG:")
     print(f"  OUT_FILE={OUT_FILE}")
     print(f"  TAGS_ROOT={TAGS_ROOT}")
@@ -514,7 +617,7 @@ def main() -> None:
     print(f"  MAX_DISCOVERED_SECTIONS={MAX_DISCOVERED_SECTIONS}")
     print(f"  MAX_PAGES_PER_SECTION_HARD_LIMIT={MAX_PAGES_PER_SECTION_HARD_LIMIT}")
 
-    existing = load_existing(OUT_FILE)
+    existing = safe_load_json_array(OUT_FILE)
     print(f"Existing records: {len(existing)}")
 
     root_soup = get_soup(TAGS_ROOT)
@@ -570,8 +673,6 @@ def main() -> None:
     print(f"\nClean scraped total (deduped): {len(scraped_records)}")
 
     if VALIDATE_INVITES:
-        import asyncio
-
         scraped_records = asyncio.run(validate_with_discord(scraped_records))
         scraped_records = dedupe_by_tag_invite(scraped_records)
         print(f"After invite validation total: {len(scraped_records)}")
@@ -596,9 +697,7 @@ def main() -> None:
         return
 
     write_backup(OUT_FILE)
-
-    with open(OUT_FILE, "w", encoding="utf-8") as file:
-        json.dump(output_records, file, indent=2, ensure_ascii=False)
+    atomic_write_json(OUT_FILE, output_records)
 
     print(f"\nWROTE {len(output_records)} records to {OUT_FILE}")
 
