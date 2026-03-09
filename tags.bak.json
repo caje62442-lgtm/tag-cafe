@@ -73530,14 +73530,5 @@
   {
     "tag": "BVB",
     "invite": "https://discord.gg/infinity"
-  },
-  {
-    "tag": "NSFW",
-    "invite": "https://discord.gg/nsfw",
-    "detail_url": null,
-    "server_name": "NSFW 9 1 1 1240752303993000036",
-    "tag_source": "card_local",
-    "tag_score": 30,
-    "source_section": "https://discord.band/tags/alphabet"
   }
 ]
