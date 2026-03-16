@@ -5327,13 +5327,6 @@
     "tag_source": "top_row"
   },
   {
-    "tag": "27",
-    "invite": "https://discord.gg/pron",
-    "server_name": "You need to login",
-    "source_section": "https://discord.band/tags/2-characters",
-    "tag_source": "top_row"
-  },
-  {
     "tag": "CI",
     "invite": "https://discord.gg/ci",
     "server_name": "You need to login",
@@ -5525,6 +5518,13 @@
   {
     "tag": "希望",
     "invite": "https://discord.gg/vhaven",
+    "server_name": "You need to login",
+    "source_section": "https://discord.band/tags/2-characters",
+    "tag_source": "top_row"
+  },
+  {
+    "tag": "𝕮ఌ",
+    "invite": "https://discord.gg/rpFuVzsMJe",
     "server_name": "You need to login",
     "source_section": "https://discord.band/tags/2-characters",
     "tag_source": "top_row"
@@ -12770,7 +12770,7 @@
   {
     "tag": "one",
     "invite": "https://discord.gg/one",
-    "server_name": "You need to login",
+    "server_name": "ward number one",
     "source_section": "https://discord.band/tags/3-characters",
     "tag_source": "top_row"
   },
@@ -18291,13 +18291,6 @@
     "tag_source": "top_row"
   },
   {
-    "tag": "god",
-    "invite": "https://discord.gg/mog",
-    "server_name": "You need to login",
-    "source_section": "https://discord.band/tags/3-characters",
-    "tag_source": "top_row"
-  },
-  {
     "tag": "サクラ",
     "invite": "https://discord.gg/reb4vnMzyZ",
     "server_name": "discord.band/tags",
@@ -19376,6 +19369,13 @@
     "tag_source": "top_row"
   },
   {
+    "tag": "⁷⁰⁷",
+    "invite": "https://discord.gg/chan",
+    "server_name": "You need to login",
+    "source_section": "https://discord.band/tags/3-characters",
+    "tag_source": "top_row"
+  },
+  {
     "tag": "fooǳ",
     "invite": "https://discord.gg/munchies",
     "server_name": "You need to login",
@@ -19427,27 +19427,6 @@
   {
     "tag": "BOOM",
     "invite": "https://discord.gg/fnbkdJzVfT",
-    "server_name": "You need to login",
-    "source_section": "https://discord.band/tags/4-characters",
-    "tag_source": "top_row"
-  },
-  {
-    "tag": "COOL",
-    "invite": "https://discord.gg/Pv5rMkbcQv",
-    "server_name": "You need to login",
-    "source_section": "https://discord.band/tags/4-characters",
-    "tag_source": "top_row"
-  },
-  {
-    "tag": "PAWS",
-    "invite": "https://discord.gg/nmw7nPukZv",
-    "server_name": "You need to login",
-    "source_section": "https://discord.band/tags/4-characters",
-    "tag_source": "top_row"
-  },
-  {
-    "tag": "MǀLF",
-    "invite": "https://discord.gg/uNtwxzKkdD",
     "server_name": "You need to login",
     "source_section": "https://discord.band/tags/4-characters",
     "tag_source": "top_row"
@@ -38374,13 +38353,6 @@
     "tag_source": "top_row"
   },
   {
-    "tag": "hate",
-    "invite": "https://discord.gg/BXmUnHAVbK",
-    "server_name": "You need to login",
-    "source_section": "https://discord.band/tags/4-characters",
-    "tag_source": "top_row"
-  },
-  {
     "tag": "HAXX",
     "invite": "https://discord.gg/roblox-scripts-942431667807735888",
     "server_name": "You need to login",
@@ -44716,13 +44688,6 @@
     "tag_source": "top_row"
   },
   {
-    "tag": "rudo",
-    "invite": "https://discord.gg/rudo",
-    "server_name": "You need to login",
-    "source_section": "https://discord.band/tags/4-characters",
-    "tag_source": "top_row"
-  },
-  {
     "tag": "خالع",
     "invite": "https://discord.gg/lce",
     "server_name": "You need to login",
@@ -45483,6 +45448,34 @@
     "invite": "https://discord.gg/apple",
     "server_name": "You need to login",
     "source_section": "https://discord.band/tags/4-characters",
+    "tag_source": "top_row"
+  },
+  {
+    "tag": "DEAD",
+    "invite": "https://discord.gg/rpr",
+    "server_name": "You need to login",
+    "source_section": "https://discord.band/tags/4-characters",
+    "tag_source": "top_row"
+  },
+  {
+    "tag": "DRƢD",
+    "invite": "https://discord.gg/android",
+    "server_name": "You need to login",
+    "source_section": "https://discord.band/tags/4-characters",
+    "tag_source": "top_row"
+  },
+  {
+    "tag": "LUCI",
+    "invite": "https://discord.gg/hazbinhotel",
+    "server_name": "Sinners’ Citadel",
+    "source_section": "https://discord.band/tags/4-characters",
+    "tag_source": "top_row"
+  },
+  {
+    "tag": "ٴٴ",
+    "invite": "https://discord.gg/trlx",
+    "server_name": "fun roblox games",
+    "source_section": "https://discord.band/tags/alphabet",
     "tag_source": "top_row"
   }
 ]
