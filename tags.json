@@ -1064,13 +1064,6 @@
     "tag_source": "top_row"
   },
   {
-    "tag": ":3",
-    "invite": "https://discord.gg/NvEB2CVJNg",
-    "server_name": "You need to login",
-    "source_section": "https://discord.band/tags/2-characters",
-    "tag_source": "top_row"
-  },
-  {
     "tag": "17",
     "invite": "https://discord.gg/46HnFaVUCE",
     "server_name": "You need to login",
@@ -2905,6 +2898,13 @@
     "tag_source": "top_row"
   },
   {
+    "tag": "C⁴",
+    "invite": "https://discord.gg/Yps3nTWKRz",
+    "server_name": "You need to login",
+    "source_section": "https://discord.band/tags/2-characters",
+    "tag_source": "top_row"
+  },
+  {
     "tag": "ZT",
     "invite": "https://discord.gg/zerator",
     "server_name": "You need to login",
@@ -3342,13 +3342,6 @@
     "tag": "릴황",
     "invite": "https://discord.gg/3Uvdfs5VTr",
     "server_name": "You need to login",
-    "source_section": "https://discord.band/tags/2-characters",
-    "tag_source": "top_row"
-  },
-  {
-    "tag": "솔부",
-    "invite": "https://discord.gg/G6mzhztEy4",
-    "server_name": "Verkwan (솔부) Tag",
     "source_section": "https://discord.band/tags/2-characters",
     "tag_source": "top_row"
   },
@@ -5313,17 +5306,17 @@
     "tag_source": "top_row"
   },
   {
-    "tag": "F3",
+    "tag": "SR",
     "invite": "https://discord.gg/sr",
     "server_name": "You need to login",
     "source_section": "https://discord.band/tags/2-characters",
     "tag_source": "top_row"
   },
   {
-    "tag": "゛ໃ༢",
-    "invite": "https://discord.gg/celesty",
+    "tag": "NW",
+    "invite": "https://discord.gg/cy",
     "server_name": "You need to login",
-    "source_section": "https://discord.band/tags/3-characters",
+    "source_section": "https://discord.band/tags/2-characters",
     "tag_source": "top_row"
   },
   {
@@ -5336,6 +5329,20 @@
   {
     "tag": "BMW",
     "invite": "https://discord.gg/yUUsTMzNnJ",
+    "server_name": "You need to login",
+    "source_section": "https://discord.band/tags/3-characters",
+    "tag_source": "top_row"
+  },
+  {
+    "tag": "឵឵឵",
+    "invite": "https://discord.gg/KafECwV4Xy",
+    "server_name": "You need to login",
+    "source_section": "https://discord.band/tags/3-characters",
+    "tag_source": "top_row"
+  },
+  {
+    "tag": "゛ໃ༢",
+    "invite": "https://discord.gg/celesty",
     "server_name": "You need to login",
     "source_section": "https://discord.band/tags/3-characters",
     "tag_source": "top_row"
@@ -5383,8 +5390,22 @@
     "tag_source": "top_row"
   },
   {
-    "tag": "឵឵឵",
-    "invite": "https://discord.gg/KafECwV4Xy",
+    "tag": "LEN",
+    "invite": "https://discord.gg/jQdkqPpNUv",
+    "server_name": "You need to login",
+    "source_section": "https://discord.band/tags/3-characters",
+    "tag_source": "top_row"
+  },
+  {
+    "tag": "ᶻz𐰁",
+    "invite": "https://discord.gg/Dr6P5NBJDC",
+    "server_name": "You need to login",
+    "source_section": "https://discord.band/tags/3-characters",
+    "tag_source": "top_row"
+  },
+  {
+    "tag": "ℒuv",
+    "invite": "https://discord.gg/AvRjfqvkRu",
     "server_name": "You need to login",
     "source_section": "https://discord.band/tags/3-characters",
     "tag_source": "top_row"
@@ -6195,13 +6216,6 @@
     "tag_source": "top_row"
   },
   {
-    "tag": "LEN",
-    "invite": "https://discord.gg/jQdkqPpNUv",
-    "server_name": "You need to login",
-    "source_section": "https://discord.band/tags/3-characters",
-    "tag_source": "top_row"
-  },
-  {
     "tag": "PKR",
     "invite": "https://discord.gg/MyFvDKgtAG",
     "server_name": "You need to login",
@@ -6345,13 +6359,6 @@
     "tag": "ԝlԝ",
     "invite": "https://discord.gg/wlwtag",
     "server_name": "gubby (ԝlԝ tag)",
-    "source_section": "https://discord.band/tags/3-characters",
-    "tag_source": "top_row"
-  },
-  {
-    "tag": "ᶻz𐰁",
-    "invite": "https://discord.gg/Dr6P5NBJDC",
-    "server_name": "You need to login",
     "source_section": "https://discord.band/tags/3-characters",
     "tag_source": "top_row"
   },
@@ -6631,13 +6638,6 @@
   {
     "tag": "POW",
     "invite": "https://discord.gg/eYA3fmy2qS",
-    "server_name": "You need to login",
-    "source_section": "https://discord.band/tags/3-characters",
-    "tag_source": "top_row"
-  },
-  {
-    "tag": "ℒuv",
-    "invite": "https://discord.gg/AvRjfqvkRu",
     "server_name": "You need to login",
     "source_section": "https://discord.band/tags/3-characters",
     "tag_source": "top_row"
@@ -11179,13 +11179,6 @@
     "tag_source": "top_row"
   },
   {
-    "tag": "Tao",
-    "invite": "https://discord.gg/immortaltaoists",
-    "server_name": "Immortal Taoists",
-    "source_section": "https://discord.band/tags/3-characters",
-    "tag_source": "top_row"
-  },
-  {
     "tag": "VPS",
     "invite": "https://discord.gg/Bn8Fq4MGbV",
     "server_name": "You need to login",
@@ -12623,13 +12616,6 @@
   {
     "tag": ":3c",
     "invite": "https://discord.gg/YtNHZJq",
-    "server_name": "You need to login",
-    "source_section": "https://discord.band/tags/3-characters",
-    "tag_source": "top_row"
-  },
-  {
-    "tag": "(ツ)",
-    "invite": "https://discord.gg/vcxgGtfQrS",
     "server_name": "You need to login",
     "source_section": "https://discord.band/tags/3-characters",
     "tag_source": "top_row"
@@ -18319,13 +18305,6 @@
     "tag_source": "top_row"
   },
   {
-    "tag": "Mei",
-    "invite": "https://discord.gg/mei",
-    "server_name": "You need to login",
-    "source_section": "https://discord.band/tags/3-characters",
-    "tag_source": "top_row"
-  },
-  {
     "tag": "mcr",
     "invite": "https://discord.gg/w7ZybJP3dK",
     "server_name": "You need to login",
@@ -18830,13 +18809,6 @@
     "tag_source": "top_row"
   },
   {
-    "tag": "Tin",
-    "invite": "https://discord.gg/tin",
-    "server_name": "You need to login",
-    "source_section": "https://discord.band/tags/3-characters",
-    "tag_source": "top_row"
-  },
-  {
     "tag": "CR7",
     "invite": "https://discord.gg/to",
     "server_name": "You need to login",
@@ -18879,6 +18851,20 @@
     "tag_source": "top_row"
   },
   {
+    "tag": "FGC",
+    "invite": "https://discord.gg/fgc",
+    "server_name": "You need to login",
+    "source_section": "https://discord.band/tags/3-characters",
+    "tag_source": "top_row"
+  },
+  {
+    "tag": "SSL",
+    "invite": "https://discord.gg/verify",
+    "server_name": "You need to login",
+    "source_section": "https://discord.band/tags/3-characters",
+    "tag_source": "top_row"
+  },
+  {
     "tag": "GOJO",
     "invite": "https://discord.gg/gojosdomain",
     "server_name": "You need to login",
@@ -18914,6 +18900,20 @@
     "tag_source": "top_row"
   },
   {
+    "tag": "baby",
+    "invite": "https://discord.gg/nZSH6Dyqzj",
+    "server_name": "You need to login",
+    "source_section": "https://discord.band/tags/4-characters",
+    "tag_source": "top_row"
+  },
+  {
+    "tag": "ivan",
+    "invite": "https://discord.gg/ivancure",
+    "server_name": "You need to login",
+    "source_section": "https://discord.band/tags/4-characters",
+    "tag_source": "top_row"
+  },
+  {
     "tag": "#luv",
     "invite": "https://discord.gg/8RCkF9aFSt",
     "server_name": "You need to login",
@@ -18924,6 +18924,20 @@
     "tag": "rose",
     "invite": "https://discord.gg/rpkkWYbSZ3",
     "server_name": "You need to login",
+    "source_section": "https://discord.band/tags/4-characters",
+    "tag_source": "top_row"
+  },
+  {
+    "tag": "till",
+    "invite": "https://discord.gg/tillgone",
+    "server_name": "You need to login",
+    "source_section": "https://discord.band/tags/4-characters",
+    "tag_source": "top_row"
+  },
+  {
+    "tag": "lamb",
+    "invite": "https://discord.gg/GfkNdu5Djg",
+    "server_name": "part of buns :3",
     "source_section": "https://discord.band/tags/4-characters",
     "tag_source": "top_row"
   },
@@ -19119,13 +19133,6 @@
   {
     "tag": "CHAD",
     "invite": "https://discord.gg/mAKt2AAbrM",
-    "server_name": "You need to login",
-    "source_section": "https://discord.band/tags/4-characters",
-    "tag_source": "top_row"
-  },
-  {
-    "tag": "ivan",
-    "invite": "https://discord.gg/ivancure",
     "server_name": "You need to login",
     "source_section": "https://discord.band/tags/4-characters",
     "tag_source": "top_row"
@@ -19327,13 +19334,6 @@
     "tag_source": "top_row"
   },
   {
-    "tag": "till",
-    "invite": "https://discord.gg/tillgone",
-    "server_name": "You need to login",
-    "source_section": "https://discord.band/tags/4-characters",
-    "tag_source": "top_row"
-  },
-  {
     "tag": "ToZi",
     "invite": "https://discord.gg/QyRg2UWEA9",
     "server_name": "You need to login",
@@ -19421,13 +19421,6 @@
     "tag": "GΛMΞ",
     "invite": "https://discord.gg/xF3ucC8nsb",
     "server_name": "You need to login",
-    "source_section": "https://discord.band/tags/4-characters",
-    "tag_source": "top_row"
-  },
-  {
-    "tag": "lamb",
-    "invite": "https://discord.gg/GfkNdu5Djg",
-    "server_name": "part of buns :3",
     "source_section": "https://discord.band/tags/4-characters",
     "tag_source": "top_row"
   },
@@ -32991,13 +32984,6 @@
     "tag_source": "top_row"
   },
   {
-    "tag": "cΙit",
-    "invite": "https://discord.gg/bda53GwvuJ",
-    "server_name": "You need to login",
-    "source_section": "https://discord.band/tags/4-characters",
-    "tag_source": "top_row"
-  },
-  {
     "tag": "DARK",
     "invite": "https://discord.gg/QWvhwVA8G4",
     "server_name": "You need to login",
@@ -34505,13 +34491,6 @@
   {
     "tag": "WORM",
     "invite": "https://discord.gg/FmQSJ43Fyt",
-    "server_name": "You need to login",
-    "source_section": "https://discord.band/tags/4-characters",
-    "tag_source": "top_row"
-  },
-  {
-    "tag": "x404",
-    "invite": "https://discord.gg/Yps3nTWKRz",
     "server_name": "You need to login",
     "source_section": "https://discord.band/tags/4-characters",
     "tag_source": "top_row"
@@ -42133,13 +42112,6 @@
     "tag_source": "top_row"
   },
   {
-    "tag": "luma",
-    "invite": "https://discord.gg/kylie",
-    "server_name": "You need to login",
-    "source_section": "https://discord.band/tags/4-characters",
-    "tag_source": "top_row"
-  },
-  {
     "tag": "c00l",
     "invite": "https://discord.gg/forsakenrblx",
     "server_name": "You need to login",
@@ -43848,6 +43820,13 @@
     "tag_source": "top_row"
   },
   {
+    "tag": "ʟᴏɴᴇ",
+    "invite": "https://discord.gg/nature",
+    "server_name": "You need to login",
+    "source_section": "https://discord.band/tags/4-characters",
+    "tag_source": "top_row"
+  },
+  {
     "tag": "COMF",
     "invite": "https://discord.gg/noelle",
     "server_name": "You need to login",
@@ -44060,13 +44039,6 @@
   {
     "tag": "MDVA",
     "invite": "https://discord.gg/moldova",
-    "server_name": "You need to login",
-    "source_section": "https://discord.band/tags/4-characters",
-    "tag_source": "top_row"
-  },
-  {
-    "tag": "MURA",
-    "invite": "https://discord.gg/murasaki",
     "server_name": "You need to login",
     "source_section": "https://discord.band/tags/4-characters",
     "tag_source": "top_row"
@@ -44543,6 +44515,13 @@
   {
     "tag": "zurh",
     "invite": "https://discord.gg/belly",
+    "server_name": "You need to login",
+    "source_section": "https://discord.band/tags/4-characters",
+    "tag_source": "top_row"
+  },
+  {
+    "tag": "VICE",
+    "invite": "https://discord.gg/vice",
     "server_name": "You need to login",
     "source_section": "https://discord.band/tags/4-characters",
     "tag_source": "top_row"
