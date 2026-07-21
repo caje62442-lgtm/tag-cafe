@@ -5005,6 +5005,13 @@
     "tag_source": "top_row"
   },
   {
+    "tag": "CL",
+    "invite": "https://discord.gg/aest",
+    "server_name": "Chivalry Legions",
+    "source_section": "https://discord.band/tags/2-characters",
+    "tag_source": "top_row"
+  },
+  {
     "tag": "CAT",
     "invite": "https://discord.gg/sanic",
     "server_name": "You need to login",
@@ -17493,10 +17500,10 @@
     "tag_source": "top_row"
   },
   {
-    "tag": "ZENO",
-    "invite": "https://discord.gg/WCF4SpcTK7",
-    "server_name": "discord.band/tags",
-    "source_section": "https://discord.band/tags/4-characters",
+    "tag": "ٴٴٴ",
+    "invite": "https://discord.gg/ski",
+    "server_name": "You need to login",
+    "source_section": "https://discord.band/tags/3-characters",
     "tag_source": "top_row"
   },
   {
@@ -17580,6 +17587,13 @@
     "tag": "zoro",
     "invite": "https://discord.gg/Q3jqeeVdCw",
     "server_name": "You need to login",
+    "source_section": "https://discord.band/tags/4-characters",
+    "tag_source": "top_row"
+  },
+  {
+    "tag": "ZENO",
+    "invite": "https://discord.gg/WCF4SpcTK7",
+    "server_name": "discord.band/tags",
     "source_section": "https://discord.band/tags/4-characters",
     "tag_source": "top_row"
   },
@@ -24402,13 +24416,6 @@
     "tag_source": "top_row"
   },
   {
-    "tag": "codX",
-    "invite": "https://discord.gg/fhuS2KQq64",
-    "server_name": "ʚ༅ Articon Cafe˚⚘",
-    "source_section": "https://discord.band/tags/4-characters",
-    "tag_source": "top_row"
-  },
-  {
     "tag": "DSNY",
     "invite": "https://discord.gg/rdisneyland",
     "server_name": "You need to login",
@@ -25300,13 +25307,6 @@
   {
     "tag": "KPOP",
     "invite": "https://discord.gg/qUYr8EqQwP",
-    "server_name": "You need to login",
-    "source_section": "https://discord.band/tags/4-characters",
-    "tag_source": "top_row"
-  },
-  {
-    "tag": "KTTN",
-    "invite": "https://discord.gg/xvids",
     "server_name": "You need to login",
     "source_section": "https://discord.band/tags/4-characters",
     "tag_source": "top_row"
@@ -38437,13 +38437,6 @@
     "tag_source": "top_row"
   },
   {
-    "tag": "TOHE",
-    "invite": "https://discord.gg/ten",
-    "server_name": "You need to login",
-    "source_section": "https://discord.band/tags/4-characters",
-    "tag_source": "top_row"
-  },
-  {
     "tag": "LONE",
     "invite": "https://discord.gg/destroylonely",
     "server_name": "You need to login",
@@ -40602,6 +40595,20 @@
   {
     "tag": "STRF",
     "invite": "https://discord.gg/gaming",
+    "server_name": "You need to login",
+    "source_section": "https://discord.band/tags/4-characters",
+    "tag_source": "top_row"
+  },
+  {
+    "tag": "flee",
+    "invite": "https://discord.gg/flee",
+    "server_name": "You need to login",
+    "source_section": "https://discord.band/tags/4-characters",
+    "tag_source": "top_row"
+  },
+  {
+    "tag": "gumi",
+    "invite": "https://discord.gg/gumi",
     "server_name": "You need to login",
     "source_section": "https://discord.band/tags/4-characters",
     "tag_source": "top_row"
