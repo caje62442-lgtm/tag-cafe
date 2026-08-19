@@ -4865,22 +4865,15 @@
     "tag_source": "top_row"
   },
   {
-    "tag": "sua",
-    "invite": "https://discord.gg/9dMcKWYykz",
-    "server_name": "You need to login",
-    "source_section": "https://discord.band/tags/3-characters",
-    "tag_source": "top_row"
-  },
-  {
-    "tag": "ٴٴٴ",
-    "invite": "https://discord.gg/168",
-    "server_name": "You need to login",
-    "source_section": "https://discord.band/tags/3-characters",
-    "tag_source": "top_row"
-  },
-  {
     "tag": "PRO",
     "invite": "https://discord.gg/gca",
+    "server_name": "You need to login",
+    "source_section": "https://discord.band/tags/3-characters",
+    "tag_source": "top_row"
+  },
+  {
+    "tag": "sua",
+    "invite": "https://discord.gg/9dMcKWYykz",
     "server_name": "You need to login",
     "source_section": "https://discord.band/tags/3-characters",
     "tag_source": "top_row"
@@ -10362,7 +10355,7 @@
   {
     "tag": "-|-",
     "invite": "https://discord.gg/veDKmKu9KW",
-    "server_name": "〘♰〙𝐎𝐫𝐭𝐡𝐨𝐝𝐨𝐱 𝐘𝐨𝐮𝐭𝐡",
+    "server_name": "〘♰〙Orthodox Youth",
     "source_section": "https://discord.band/tags/3-characters",
     "tag_source": "top_row"
   },
@@ -16464,6 +16457,13 @@
     "tag_source": "top_row"
   },
   {
+    "tag": ":Re",
+    "invite": "https://discord.gg/bankai",
+    "server_name": "You need to login",
+    "source_section": "https://discord.band/tags/3-characters",
+    "tag_source": "top_row"
+  },
+  {
     "tag": "OMP",
     "invite": "https://discord.gg/samp",
     "server_name": "You need to login",
@@ -17213,13 +17213,6 @@
     "tag_source": "top_row"
   },
   {
-    "tag": "KVTA",
-    "invite": "https://discord.gg/czbt9PUa26",
-    "server_name": "You need to login",
-    "source_section": "https://discord.band/tags/4-characters",
-    "tag_source": "top_row"
-  },
-  {
     "tag": ".˚",
     "invite": "https://discord.gg/3qEmxey4ya",
     "server_name": "You need to login",
@@ -17229,6 +17222,13 @@
   {
     "tag": "VAMP",
     "invite": "https://discord.gg/count",
+    "server_name": "You need to login",
+    "source_section": "https://discord.band/tags/4-characters",
+    "tag_source": "top_row"
+  },
+  {
+    "tag": "KVTA",
+    "invite": "https://discord.gg/czbt9PUa26",
     "server_name": "You need to login",
     "source_section": "https://discord.band/tags/4-characters",
     "tag_source": "top_row"
@@ -17433,6 +17433,13 @@
     "tag": "cool",
     "invite": "https://discord.gg/cool",
     "server_name": "You need to login",
+    "source_section": "https://discord.band/tags/4-characters",
+    "tag_source": "top_row"
+  },
+  {
+    "tag": "FAME",
+    "invite": "https://discord.gg/fame",
+    "server_name": "Лучший тег в мире",
     "source_section": "https://discord.band/tags/4-characters",
     "tag_source": "top_row"
   },
@@ -35994,13 +36001,6 @@
     "tag_source": "top_row"
   },
   {
-    "tag": "Meli",
-    "invite": "https://discord.gg/mel",
-    "server_name": "You need to login",
-    "source_section": "https://discord.band/tags/4-characters",
-    "tag_source": "top_row"
-  },
-  {
     "tag": "KREW",
     "invite": "https://discord.gg/krew",
     "server_name": "You need to login",
@@ -37004,6 +37004,13 @@
   {
     "tag": "INTV",
     "invite": "https://discord.gg/indian",
+    "server_name": "You need to login",
+    "source_section": "https://discord.band/tags/4-characters",
+    "tag_source": "top_row"
+  },
+  {
+    "tag": "PoGo",
+    "invite": "https://discord.gg/pokecoords",
     "server_name": "You need to login",
     "source_section": "https://discord.band/tags/4-characters",
     "tag_source": "top_row"
@@ -38992,13 +38999,6 @@
   {
     "tag": "SMSG",
     "invite": "https://discord.gg/samsung",
-    "server_name": "You need to login",
-    "source_section": "https://discord.band/tags/4-characters",
-    "tag_source": "top_row"
-  },
-  {
-    "tag": "FYRE",
-    "invite": "https://discord.gg/bankai",
     "server_name": "You need to login",
     "source_section": "https://discord.band/tags/4-characters",
     "tag_source": "top_row"
