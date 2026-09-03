@@ -2352,13 +2352,6 @@
     "tag_source": "top_row"
   },
   {
-    "tag": "ٴٴ",
-    "invite": "https://discord.gg/corrupted",
-    "server_name": "You need to login",
-    "source_section": "https://discord.band/tags/2-characters",
-    "tag_source": "top_row"
-  },
-  {
     "tag": "작은",
     "invite": "https://discord.gg/mdvXvcbJky",
     "server_name": "You need to login",
@@ -4091,6 +4084,13 @@
     "tag": "프문",
     "invite": "https://discord.gg/limbuscompany",
     "server_name": "You need to login",
+    "source_section": "https://discord.band/tags/2-characters",
+    "tag_source": "top_row"
+  },
+  {
+    "tag": "ٴٴ",
+    "invite": "https://discord.gg/ud",
+    "server_name": "discord.band/tags",
     "source_section": "https://discord.band/tags/2-characters",
     "tag_source": "top_row"
   },
@@ -8984,6 +8984,13 @@
     "tag": "うさぎ",
     "invite": "https://discord.gg/kEw8GJvJxx",
     "server_name": "discord.band/tags",
+    "source_section": "https://discord.band/tags/3-characters",
+    "tag_source": "top_row"
+  },
+  {
+    "tag": "´ཀ`",
+    "invite": "https://discord.gg/5QfBEdEzXs",
+    "server_name": "You need to login",
     "source_section": "https://discord.band/tags/3-characters",
     "tag_source": "top_row"
   },
@@ -15920,7 +15927,7 @@
   {
     "tag": "ST!",
     "invite": "https://discord.gg/study",
-    "server_name": "Study Together ♫",
+    "server_name": "Study Together 🎒",
     "source_section": "https://discord.band/tags/3-characters",
     "tag_source": "top_row"
   },
@@ -16305,13 +16312,6 @@
   {
     "tag": "KDF",
     "invite": "https://discord.gg/kaiju",
-    "server_name": "You need to login",
-    "source_section": "https://discord.band/tags/3-characters",
-    "tag_source": "top_row"
-  },
-  {
-    "tag": "ٴٴٴ",
-    "invite": "https://discord.gg/joker",
     "server_name": "You need to login",
     "source_section": "https://discord.band/tags/3-characters",
     "tag_source": "top_row"
@@ -16933,13 +16933,6 @@
     "tag_source": "top_row"
   },
   {
-    "tag": "CAT",
-    "invite": "https://discord.gg/dan",
-    "server_name": "discord.band/tags",
-    "source_section": "https://discord.band/tags/3-characters",
-    "tag_source": "top_row"
-  },
-  {
     "tag": "JTG",
     "invite": "https://discord.gg/jtg",
     "server_name": "Journey Together",
@@ -17012,6 +17005,13 @@
   {
     "tag": "KVTA",
     "invite": "https://discord.gg/czbt9PUa26",
+    "server_name": "You need to login",
+    "source_section": "https://discord.band/tags/4-characters",
+    "tag_source": "top_row"
+  },
+  {
+    "tag": "︻芫═一",
+    "invite": "https://discord.gg/SCkAjE4bNh",
     "server_name": "You need to login",
     "source_section": "https://discord.band/tags/4-characters",
     "tag_source": "top_row"
@@ -37110,13 +37110,6 @@
     "tag": "SUKU",
     "invite": "https://discord.gg/suku",
     "server_name": "You need to login",
-    "source_section": "https://discord.band/tags/4-characters",
-    "tag_source": "top_row"
-  },
-  {
-    "tag": "ٴٴٴٴ",
-    "invite": "https://discord.gg/ud",
-    "server_name": "discord.band/tags",
     "source_section": "https://discord.band/tags/4-characters",
     "tag_source": "top_row"
   },
