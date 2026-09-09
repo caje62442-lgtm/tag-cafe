@@ -3600,7 +3600,7 @@
   {
     "tag": "鸡翅",
     "invite": "https://discord.gg/aaa",
-    "server_name": "chicken wings🍗 夏天",
+    "server_name": "You need to login",
     "source_section": "https://discord.band/tags/2-characters",
     "tag_source": "top_row"
   },
@@ -4459,7 +4459,7 @@
     "tag_source": "top_row"
   },
   {
-    "tag": "61",
+    "tag": "𝐂𝐕",
     "invite": "https://discord.gg/ao",
     "server_name": "You need to login",
     "source_section": "https://discord.band/tags/2-characters",
@@ -16933,13 +16933,6 @@
     "tag_source": "top_row"
   },
   {
-    "tag": "KVTA",
-    "invite": "https://discord.gg/czbt9PUa26",
-    "server_name": "You need to login",
-    "source_section": "https://discord.band/tags/4-characters",
-    "tag_source": "top_row"
-  },
-  {
     "tag": "SOUL",
     "invite": "https://discord.gg/celestrials",
     "server_name": "You need to login",
@@ -16963,20 +16956,6 @@
   {
     "tag": "nene",
     "invite": "https://discord.gg/pe5AEhjr8Q",
-    "server_name": "You need to login",
-    "source_section": "https://discord.band/tags/4-characters",
-    "tag_source": "top_row"
-  },
-  {
-    "tag": "God†",
-    "invite": "https://discord.gg/3JgrrJtrGg",
-    "server_name": "You need to login",
-    "source_section": "https://discord.band/tags/4-characters",
-    "tag_source": "top_row"
-  },
-  {
-    "tag": "ナヒーダ",
-    "invite": "https://discord.gg/nahida",
     "server_name": "You need to login",
     "source_section": "https://discord.band/tags/4-characters",
     "tag_source": "top_row"
@@ -38381,6 +38360,13 @@
     "tag_source": "top_row"
   },
   {
+    "tag": "rawr",
+    "invite": "https://discord.gg/rawr",
+    "server_name": "You need to login",
+    "source_section": "https://discord.band/tags/4-characters",
+    "tag_source": "top_row"
+  },
+  {
     "tag": "TIGR",
     "invite": "https://discord.gg/mGgyUWqNhj",
     "server_name": "𝓣𝓲𝓰𝓮𝓻´𝓼 #𝙵𝚁𝙴𝙴🇵🇸",
@@ -39363,8 +39349,15 @@
   {
     "tag": "LEAF",
     "invite": "https://discord.gg/leafy",
-    "server_name": "Non-English Tags",
-    "source_section": "https://discord.band/tags/english",
+    "server_name": "You need to login",
+    "source_section": "https://discord.band/tags/4-characters",
+    "tag_source": "top_row"
+  },
+  {
+    "tag": "luxe",
+    "invite": "https://discord.gg/luxe",
+    "server_name": "You need to login",
+    "source_section": "https://discord.band/tags/4-characters",
     "tag_source": "top_row"
   }
 ]
