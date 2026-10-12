@@ -3311,13 +3311,6 @@
     "tag_source": "top_row"
   },
   {
-    "tag": "SP",
-    "invite": "https://discord.gg/southpark",
-    "server_name": "You need to login",
-    "source_section": "https://discord.band/tags/2-characters",
-    "tag_source": "top_row"
-  },
-  {
     "tag": "゛𑣲",
     "invite": "https://discord.gg/yukino",
     "server_name": "You need to login",
@@ -4781,13 +4774,6 @@
     "tag_source": "top_row"
   },
   {
-    "tag": "KOI",
-    "invite": "https://discord.gg/koikatsu",
-    "server_name": "You need to login",
-    "source_section": "https://discord.band/tags/3-characters",
-    "tag_source": "top_row"
-  },
-  {
     "tag": "まふゆ",
     "invite": "https://discord.gg/FzHTJN3rxM",
     "server_name": "You need to login",
@@ -4818,6 +4804,13 @@
   {
     "tag": "˒ᯓ𖤐",
     "invite": "https://discord.gg/hazed",
+    "server_name": "You need to login",
+    "source_section": "https://discord.band/tags/3-characters",
+    "tag_source": "top_row"
+  },
+  {
+    "tag": "MOE",
+    "invite": "https://discord.gg/nya",
     "server_name": "You need to login",
     "source_section": "https://discord.band/tags/3-characters",
     "tag_source": "top_row"
@@ -16436,13 +16429,6 @@
     "tag_source": "top_row"
   },
   {
-    "tag": "MEOW",
-    "invite": "https://discord.gg/shaun",
-    "server_name": "You need to login",
-    "source_section": "https://discord.band/tags/4-characters",
-    "tag_source": "top_row"
-  },
-  {
     "tag": "NERD",
     "invite": "https://discord.gg/Cd78jGqA5a",
     "server_name": "You need to login",
@@ -16529,13 +16515,6 @@
   {
     "tag": "まふえな",
     "invite": "https://discord.gg/xsS8eGhkPj",
-    "server_name": "You need to login",
-    "source_section": "https://discord.band/tags/4-characters",
-    "tag_source": "top_row"
-  },
-  {
-    "tag": "ܔܛܮܨ",
-    "invite": "https://discord.gg/4xgEXsZgNC",
     "server_name": "You need to login",
     "source_section": "https://discord.band/tags/4-characters",
     "tag_source": "top_row"
@@ -35387,6 +35366,13 @@
   {
     "tag": "INTV",
     "invite": "https://discord.gg/indian",
+    "server_name": "You need to login",
+    "source_section": "https://discord.band/tags/4-characters",
+    "tag_source": "top_row"
+  },
+  {
+    "tag": "PoGo",
+    "invite": "https://discord.gg/pokecoords",
     "server_name": "You need to login",
     "source_section": "https://discord.band/tags/4-characters",
     "tag_source": "top_row"
