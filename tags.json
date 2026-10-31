@@ -13860,7 +13860,7 @@
     "tag_source": "top_row"
   },
   {
-    "tag": "NSFW",
+    "tag": "حبَ",
     "invite": "https://discord.gg/blr",
     "server_name": "You need to login",
     "source_section": "https://discord.band/tags/3-characters",
@@ -15997,6 +15997,13 @@
   {
     "tag": "RNDY",
     "invite": "https://discord.gg/Aw4JzPSutf",
+    "server_name": "You need to login",
+    "source_section": "https://discord.band/tags/4-characters",
+    "tag_source": "top_row"
+  },
+  {
+    "tag": "meow",
+    "invite": "https://discord.gg/6xsUEAFstr",
     "server_name": "You need to login",
     "source_section": "https://discord.band/tags/4-characters",
     "tag_source": "top_row"
@@ -22220,13 +22227,6 @@
   {
     "tag": "dada",
     "invite": "https://discord.gg/PGNzhwbwfR",
-    "server_name": "You need to login",
-    "source_section": "https://discord.band/tags/4-characters",
-    "tag_source": "top_row"
-  },
-  {
-    "tag": "meow",
-    "invite": "https://discord.gg/6xsUEAFstr",
     "server_name": "You need to login",
     "source_section": "https://discord.band/tags/4-characters",
     "tag_source": "top_row"
