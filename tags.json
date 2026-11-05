@@ -1197,6 +1197,13 @@
     "tag_source": "top_row"
   },
   {
+    "tag": "PC",
+    "invite": "https://discord.gg/tags",
+    "server_name": "You need to login",
+    "source_section": "https://discord.band/tags/2-characters",
+    "tag_source": "top_row"
+  },
+  {
     "tag": "ᨐฅ",
     "invite": "https://discord.gg/tzFKkDSfWD",
     "server_name": "You need to login",
@@ -4559,13 +4566,6 @@
   {
     "tag": "CY",
     "invite": "https://discord.gg/cyn",
-    "server_name": "You need to login",
-    "source_section": "https://discord.band/tags/2-characters",
-    "tag_source": "top_row"
-  },
-  {
-    "tag": "Pe",
-    "invite": "https://discord.gg/pe",
     "server_name": "You need to login",
     "source_section": "https://discord.band/tags/2-characters",
     "tag_source": "top_row"
@@ -15092,13 +15092,6 @@
     "tag_source": "top_row"
   },
   {
-    "tag": "H2H",
-    "invite": "https://discord.gg/h2h",
-    "server_name": "You need to login",
-    "source_section": "https://discord.band/tags/3-characters",
-    "tag_source": "top_row"
-  },
-  {
     "tag": "RSN",
     "invite": "https://discord.gg/rsn",
     "server_name": "You need to login",
@@ -16037,13 +16030,6 @@
     "tag_source": "top_row"
   },
   {
-    "tag": "GOAT",
-    "invite": "https://discord.gg/WV7ZQKWdts",
-    "server_name": "discord.band/tags",
-    "source_section": "https://discord.band/tags/4-characters",
-    "tag_source": "top_row"
-  },
-  {
     "tag": "ホリミヤ",
     "invite": "https://discord.gg/FatyhqT",
     "server_name": "You need to login",
@@ -16053,6 +16039,13 @@
   {
     "tag": "ܔܛܮܨ",
     "invite": "https://discord.gg/4xgEXsZgNC",
+    "server_name": "You need to login",
+    "source_section": "https://discord.band/tags/4-characters",
+    "tag_source": "top_row"
+  },
+  {
+    "tag": "GIFT",
+    "invite": "https://discord.gg/bloxfruits-trading",
     "server_name": "You need to login",
     "source_section": "https://discord.band/tags/4-characters",
     "tag_source": "top_row"
@@ -20778,7 +20771,7 @@
   {
     "tag": "ℕɪєℝ",
     "invite": "https://discord.gg/nier",
-    "server_name": "You need to login",
+    "server_name": "NieR: Soul Nexus",
     "source_section": "https://discord.band/tags/4-characters",
     "tag_source": "top_row"
   },
@@ -22066,13 +22059,6 @@
   {
     "tag": "KAKU",
     "invite": "https://discord.gg/j5gmKUwUeX",
-    "server_name": "You need to login",
-    "source_section": "https://discord.band/tags/4-characters",
-    "tag_source": "top_row"
-  },
-  {
-    "tag": "︻芫═一",
-    "invite": "https://discord.gg/tags",
     "server_name": "You need to login",
     "source_section": "https://discord.band/tags/4-characters",
     "tag_source": "top_row"
@@ -33565,13 +33551,6 @@
     "tag_source": "top_row"
   },
   {
-    "tag": "QIYU",
-    "invite": "https://discord.gg/rafayel",
-    "server_name": "You need to login",
-    "source_section": "https://discord.band/tags/4-characters",
-    "tag_source": "top_row"
-  },
-  {
     "tag": "ᎮᏒᏕᎷ",
     "invite": "https://discord.gg/lgbt",
     "server_name": "You need to login",
@@ -34589,13 +34568,6 @@
   {
     "tag": "INTV",
     "invite": "https://discord.gg/indian",
-    "server_name": "You need to login",
-    "source_section": "https://discord.band/tags/4-characters",
-    "tag_source": "top_row"
-  },
-  {
-    "tag": "PoGo",
-    "invite": "https://discord.gg/pokecoords",
     "server_name": "You need to login",
     "source_section": "https://discord.band/tags/4-characters",
     "tag_source": "top_row"
